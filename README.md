@@ -28,6 +28,7 @@ applies styling through environment values, and uses SwiftUI's layout system to 
 - **Specialized views** with `InlineText` for inline-formatted text and `StructuredText` for block-based documents
 - **Native text selection** with proper copy-paste support
 - **Markdown support** via Foundation's `AttributedString` built-in parser
+- **UIKit-backed streaming text** for high-frequency AI response updates on iOS-family platforms
 - **Custom markup parser support** through the `MarkupParser` protocol
 - **Inline attachments** that flow with the text, such as images and custom emoji
 - **Math expressions** rendered as inline or block attachments
@@ -103,6 +104,31 @@ StructuredText(
 
 This renders a heading, a blockquote, a paragraph, and a bulleted list with appropriate spacing and styling. Each
 block can be customized independently.
+
+For token-by-token AI output, use `StreamingText` while the response is still arriving, then flip
+`isStreaming` to `false` when the final message is available:
+
+```swift
+StreamingText(
+  markdown: responseText,
+  appendedMarkdown: latestDelta,
+  isStreaming: responseIsRunning
+)
+```
+
+On UIKit platforms this uses a non-editable `UITextView`, coalesces token bursts, and appends the
+optional `appendedMarkdown` delta without scanning the full response. When `isStreaming` becomes
+`false`, rendering switches to `StructuredText` with optimized UIKit text fragments for plain rich
+text and code blocks. Native selection and copy stay available without running Textual's full
+SwiftUI text-fragment layout on every token.
+
+If you already own the streaming state outside Textual, you can also opt a final `StructuredText`
+render into the same UIKit fragment path:
+
+```swift
+StructuredText(markdown: responseText)
+  .textual.optimizedTextFragments(isSelectable: true)
+```
 
 ### The `MarkupParser` protocol
 

@@ -11,6 +11,7 @@ import SwiftUI
 
 struct HighlightedTextFragment: View {
   @Environment(\.textEnvironment) private var textEnvironment
+  @Environment(\.uikitTextRenderingOptions) private var uikitTextRenderingOptions
 
   @State private var model = Model()
 
@@ -28,9 +29,9 @@ struct HighlightedTextFragment: View {
     self.theme = theme
   }
 
+  @ViewBuilder
   var body: some View {
-    TextFragment(model.highlightedCode ?? AttributedString(content))
-      .foregroundStyle(theme.foregroundColor)
+    renderedCode
       .task(id: content) {
         await model.tokenize(
           content: content,
@@ -45,6 +46,33 @@ struct HighlightedTextFragment: View {
           environment: newValue.values.1
         )
       }
+  }
+
+  @ViewBuilder
+  private var renderedCode: some View {
+    #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
+      if uikitTextRenderingOptions.prefersTextFragments {
+        UIKitAttributedTextView(
+          attributedString: model.highlightedCode ?? AttributedString(content),
+          textEnvironment: textEnvironment,
+          isSelectable: uikitTextRenderingOptions.isSelectable,
+          wrapsText: false,
+          fontDesign: .monospaced,
+          fallbackForegroundColor: theme.foregroundColor.bestMatch(
+            for: textEnvironment.colorEnvironment
+          )
+        )
+      } else {
+        swiftUITextFragment
+      }
+    #else
+      swiftUITextFragment
+    #endif
+  }
+
+  private var swiftUITextFragment: some View {
+    TextFragment(model.highlightedCode ?? AttributedString(content))
+      .foregroundStyle(theme.foregroundColor)
   }
 }
 

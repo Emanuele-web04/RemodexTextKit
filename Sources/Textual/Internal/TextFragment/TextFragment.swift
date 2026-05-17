@@ -27,6 +27,7 @@ import SwiftUI
 
 struct TextFragment<Content: AttributedStringProtocol>: View {
   @Environment(\.textEnvironment) private var textEnvironment
+  @Environment(\.uikitTextRenderingOptions) private var uikitTextRenderingOptions
   @State private var textBuilder: TextBuilder?
 
   private let content: Content
@@ -35,7 +36,31 @@ struct TextFragment<Content: AttributedStringProtocol>: View {
     self.content = content
   }
 
+  @ViewBuilder
   var body: some View {
+    #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
+      if usesUIKitTextFragment {
+        UIKitAttributedTextView(
+          attributedString: materializedContent,
+          textEnvironment: textEnvironment,
+          isSelectable: uikitTextRenderingOptions.isSelectable,
+          wrapsText: true,
+          fontDesign: .default,
+          fallbackForegroundColor: nil
+        )
+      } else {
+        swiftUITextFragment
+      }
+    #else
+      swiftUITextFragment
+    #endif
+  }
+
+  private var text: Text {
+    textBuilder?.text ?? Text(verbatim: "")
+  }
+
+  private var swiftUITextFragment: some View {
     text
       .customAttribute(TextFragmentAttribute())
       .onGeometryChange(for: CGSize?.self, of: \.textContainerSize) { size in
@@ -50,8 +75,20 @@ struct TextFragment<Content: AttributedStringProtocol>: View {
       .modifier(TextLinkInteraction())
   }
 
-  private var text: Text {
-    textBuilder?.text ?? Text(verbatim: "")
+  private var usesUIKitTextFragment: Bool {
+    uikitTextRenderingOptions.prefersTextFragments && content.attachments().isEmpty
+  }
+
+  private var materializedContent: AttributedString {
+    if let attributedString = content as? AttributedString {
+      return attributedString
+    }
+
+    if let attributedSubstring = content as? AttributedSubstring {
+      return AttributedString(attributedSubstring)
+    }
+
+    return AttributedString(String(content.characters[...]))
   }
 }
 

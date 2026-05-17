@@ -157,6 +157,24 @@ extension TextualNamespace where Base: View {
     #endif
   }
 
+  /// Enables a lightweight UIKit-backed renderer for plain text fragments and code blocks.
+  ///
+  /// Use this for large, settled AI responses where native selection/copy and lower SwiftUI view
+  /// churn matter more than Textual's custom cross-fragment selection overlay. Fragments with
+  /// attachments keep using the standard renderer.
+  public func optimizedTextFragments(
+    _ isEnabled: Bool = true,
+    isSelectable: Bool = true
+  ) -> some View {
+    base.environment(
+      \.uikitTextRenderingOptions,
+      UIKitTextRenderingOptions(
+        prefersTextFragments: isEnabled,
+        isSelectable: isSelectable
+      )
+    )
+  }
+
   /// Sets the spacing used between table cells in ``StructuredText``.
   public func tableCellSpacing(
     horizontal: CGFloat? = nil,

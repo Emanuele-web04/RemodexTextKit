@@ -96,9 +96,28 @@ extension Text {
       return text
     }
 
-    self = textValues.reduce(Text(verbatim: "")) { partialResult, text in
-      Text("\(partialResult)\(text)")
+    self = Text(balancedConcatenationOf: textValues)
+  }
+
+  // Builds a shallow concatenation tree so highly fragmented markdown does not create
+  // a long recursive chain of Text interpolations during streaming updates.
+  fileprivate init(balancedConcatenationOf values: [Text]) {
+    guard !values.isEmpty else {
+      self = Text(verbatim: "")
+      return
     }
+
+    self = Self.concatenating(values, in: values.startIndex..<values.endIndex)
+  }
+
+  private static func concatenating(_ values: [Text], in range: Range<Int>) -> Text {
+    if range.count == 1 {
+      return values[range.lowerBound]
+    }
+
+    let midpoint = range.lowerBound + range.count / 2
+    return concatenating(values, in: range.lowerBound..<midpoint)
+      + concatenating(values, in: midpoint..<range.upperBound)
   }
 
   private init(placeholderSize size: CGSize) {
