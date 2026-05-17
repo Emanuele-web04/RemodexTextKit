@@ -6,6 +6,7 @@
 // Depends on: SwiftUI, Overflow, OverflowFrameKey, DynamicColor, StructuredText.CodeBlockProxy
 
 import SwiftUI
+import Foundation
 
 #if canImport(UIKit)
   import UIKit
@@ -24,10 +25,92 @@ extension StructuredText {
   ///   ``TextualNamespace/overflowMode(_:)`` for the lifetime of the block.
   /// - A copy button that writes the block contents to the system pasteboard.
   public struct DefaultCodeBlockStyle: CodeBlockStyle {
-    public init() {}
+    /// A code-block action icon.
+    ///
+    /// Use `.asset("copy")` for Remodex-style bundled template artwork, `.systemName(...)` for
+    /// SF Symbols, or `.custom { ... }` when the host app has its own icon resolver.
+    public struct ActionIcon {
+      private let makeBody: () -> AnyView
+
+      private init(makeBody: @escaping () -> AnyView) {
+        self.makeBody = makeBody
+      }
+
+      /// Creates an icon from an SF Symbol name.
+      public static func systemName(_ systemName: String) -> Self {
+        .init {
+          AnyView(SwiftUI.Image(systemName: systemName))
+        }
+      }
+
+      /// Creates an icon from a bundled image asset.
+      ///
+      /// The asset is rendered as a resizable template image, matching Remodex's `Image("copy")`
+      /// treatment for its Central copy glyph.
+      public static func asset(_ name: String, bundle: Bundle? = nil) -> Self {
+        .init {
+          AnyView(
+            SwiftUI.Image(name, bundle: bundle)
+              .renderingMode(.template)
+              .resizable()
+              .scaledToFit()
+          )
+        }
+      }
+
+      /// Creates an icon from a custom view.
+      public static func custom<Icon: View>(@ViewBuilder _ body: @escaping () -> Icon) -> Self {
+        .init {
+          AnyView(body())
+        }
+      }
+
+      fileprivate func view() -> AnyView {
+        makeBody()
+      }
+    }
+
+    /// Optional icon views used by the default code block actions.
+    ///
+    /// Leave any value `nil` to use Textual's built-in SF Symbol fallback for that state.
+    public struct ActionIcons {
+      let wrap: ActionIcon?
+      let unwrap: ActionIcon?
+      let copy: ActionIcon?
+      let copied: ActionIcon?
+
+      /// Creates a set of optional code-block action icons.
+      ///
+      /// - Parameters:
+      ///   - wrap: Icon shown when tapping will enable wrapping.
+      ///   - unwrap: Icon shown when tapping will return to horizontal scrolling.
+      ///   - copy: Icon shown before the code block has been copied.
+      ///   - copied: Icon shown during copied feedback.
+      public init(
+        wrap: ActionIcon? = nil,
+        unwrap: ActionIcon? = nil,
+        copy: ActionIcon? = nil,
+        copied: ActionIcon? = nil
+      ) {
+        self.wrap = wrap
+        self.unwrap = unwrap
+        self.copy = copy
+        self.copied = copied
+      }
+    }
+
+    private let actionIcons: ActionIcons
+
+    /// Creates the default code block style.
+    ///
+    /// - Parameter actionIcons: Optional custom icons for the wrap/copy controls. Missing icons
+    ///   fall back to Textual's built-in SF Symbols.
+    public init(actionIcons: ActionIcons = .init()) {
+      self.actionIcons = actionIcons
+    }
 
     public func makeBody(configuration: Configuration) -> some View {
-      DefaultCodeBlockBody(configuration: configuration)
+      DefaultCodeBlockBody(configuration: configuration, actionIcons: actionIcons)
     }
   }
 }
@@ -35,6 +118,13 @@ extension StructuredText {
 extension StructuredText.CodeBlockStyle where Self == StructuredText.DefaultCodeBlockStyle {
   /// The default code block style.
   public static var `default`: Self { .init() }
+
+  /// The default code block style with custom action icons.
+  public static func `default`(
+    actionIcons: StructuredText.DefaultCodeBlockStyle.ActionIcons
+  ) -> Self {
+    .init(actionIcons: actionIcons)
+  }
 }
 
 // MARK: - Body
@@ -42,6 +132,7 @@ extension StructuredText.CodeBlockStyle where Self == StructuredText.DefaultCode
 // Owns the wrap-toggle state and composes the header with the existing `Overflow` content tree.
 private struct DefaultCodeBlockBody: View {
   let configuration: StructuredText.CodeBlockStyleConfiguration
+  let actionIcons: StructuredText.DefaultCodeBlockStyle.ActionIcons
 
   @Environment(\.overflowMode) private var environmentOverflowMode
   @State private var wrapOverride: Bool?
@@ -55,7 +146,7 @@ private struct DefaultCodeBlockBody: View {
   // Keep layout changes non-animated. Animating the code block's real height lets parents (and
   // Xcode previews) interpolate the whole `StructuredText` from its center. Remodex only animates
   // chrome affordances here; the layout itself snaps and stays top-anchored.
-  private static let cornerRadius: CGFloat = 14
+  private static let cornerRadius: CGFloat = 18
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -70,7 +161,8 @@ private struct DefaultCodeBlockBody: View {
             wrapOverride = next
           }
         },
-        codeBlock: configuration.codeBlock
+        codeBlock: configuration.codeBlock,
+        actionIcons: actionIcons
       )
 
       Overflow {
@@ -112,11 +204,13 @@ private struct DefaultCodeBlockHeader: View {
   let isWrapping: Bool
   let toggleWrap: () -> Void
   let codeBlock: StructuredText.CodeBlockProxy
+  let actionIcons: StructuredText.DefaultCodeBlockStyle.ActionIcons
 
   var body: some View {
     HStack(spacing: 8) {
       Text(displayName)
-        .font(.system(size: 11, weight: .medium))
+        .font(.subheadline)
+        .fontWeight(.regular)
         .foregroundStyle(.secondary)
         .lineLimit(1)
         .truncationMode(.tail)
@@ -124,10 +218,10 @@ private struct DefaultCodeBlockHeader: View {
       Spacer(minLength: 8)
 
       HStack(spacing: 4) {
-        WrapButton(isWrapping: isWrapping, action: toggleWrap)
+        WrapButton(isWrapping: isWrapping, actionIcons: actionIcons, action: toggleWrap)
 
         #if !os(tvOS) && !os(watchOS)
-          CopyButton(codeBlock: codeBlock)
+          CopyButton(codeBlock: codeBlock, actionIcons: actionIcons)
         #endif
       }
     }
@@ -214,6 +308,7 @@ private struct DefaultCodeBlockHeader: View {
 
 private struct WrapButton: View {
   let isWrapping: Bool
+  let actionIcons: StructuredText.DefaultCodeBlockStyle.ActionIcons
   let action: () -> Void
 
   var body: some View {
@@ -221,7 +316,7 @@ private struct WrapButton: View {
       triggerHaptic()
       action()
     } label: {
-      SwiftUI.Image(systemName: isWrapping ? "arrow.left.and.right" : "text.alignleft")
+      icon
         .font(.system(size: 12, weight: .medium))
         .foregroundStyle(.secondary)
         .frame(minWidth: 28, minHeight: 28)
@@ -233,6 +328,17 @@ private struct WrapButton: View {
     .help(isWrapping ? "Disable word wrap" : "Enable word wrap")
     .accessibilityLabel(isWrapping ? "Disable word wrap" : "Enable word wrap")
   }
+
+  @ViewBuilder
+  private var icon: some View {
+    if isWrapping, let unwrap = actionIcons.unwrap {
+      unwrap.view()
+    } else if !isWrapping, let wrap = actionIcons.wrap {
+      wrap.view()
+    } else {
+      SwiftUI.Image(systemName: isWrapping ? "arrow.left.and.right" : "text.alignleft")
+    }
+  }
 }
 
 // MARK: - Copy button
@@ -242,13 +348,14 @@ private struct WrapButton: View {
   // Remodex's `CopyBlockButton` (icon + secondary-foreground label, 1.5s reset).
   private struct CopyButton: View {
     let codeBlock: StructuredText.CodeBlockProxy
+    let actionIcons: StructuredText.DefaultCodeBlockStyle.ActionIcons
 
     @State private var didCopy = false
 
     var body: some View {
       Button(action: copy) {
         HStack(spacing: 4) {
-          SwiftUI.Image(systemName: didCopy ? "checkmark" : "doc.on.doc")
+          icon
             .font(.system(size: 12, weight: .medium))
             .frame(width: 16, height: 16)
 
@@ -276,6 +383,17 @@ private struct WrapButton: View {
       Task { @MainActor in
         try? await Task.sleep(for: .seconds(1.5))
         withAnimation(.easeInOut(duration: 0.15)) { didCopy = false }
+      }
+    }
+
+    @ViewBuilder
+    private var icon: some View {
+      if didCopy, let copied = actionIcons.copied {
+        copied.view()
+      } else if !didCopy, let copy = actionIcons.copy {
+        copy.view()
+      } else {
+        SwiftUI.Image(systemName: didCopy ? "checkmark" : "doc.on.doc")
       }
     }
   }
