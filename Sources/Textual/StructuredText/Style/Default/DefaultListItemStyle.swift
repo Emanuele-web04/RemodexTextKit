@@ -26,7 +26,7 @@ extension StructuredText {
 extension StructuredText.ListItemStyle where Self == StructuredText.DefaultListItemStyle {
   /// The default list item style.
   public static var `default`: Self {
-    .init(markerSpacing: .fontScaled(0.5))
+    .init(markerSpacing: .fontScaled(0.25))
   }
 
   /// The default list item style with a custom marker spacing.

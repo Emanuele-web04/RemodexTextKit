@@ -192,7 +192,7 @@ individual block types or create fully custom styles.
 
 #### Built-in Styles
 
-Textual includes two complete style presets: `.default` and `.gitHub`. Apply them using the
+Textual includes a complete `.default` style preset. Apply it using the
 `textual.structuredTextStyle(_:)` modifier:
 
 ```swift
@@ -202,7 +202,7 @@ StructuredText(
     ...
     """
 )
-.textual.structuredTextStyle(.gitHub)
+.textual.structuredTextStyle(.default)
 ```
 
 This single modifier configures the entire rendering stack: inline styles (code, emphasis, strong, links), block styles
@@ -214,7 +214,7 @@ You can override specific aspects of a style without rebuilding everything. Each
 
 ```swift
 StructuredText(markdown: content)
-  .textual.structuredTextStyle(.gitHub)
+  .textual.structuredTextStyle(.default)
   .textual.headingStyle(
     CustomHeadingStyle()
   )

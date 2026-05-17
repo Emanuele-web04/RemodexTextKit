@@ -1,5 +1,5 @@
 // FILE: DefaultCodeBlockStyle.swift
-// Purpose: Default code block visual style. Renders a rounded GitHub-ish card with a
+// Purpose: Default code block visual style. Renders a rounded code card with a
 //          compact header that exposes per-block Wrap and Copy actions.
 // Layer: StructuredText / Style
 // Exports: StructuredText.DefaultCodeBlockStyle
@@ -17,7 +17,7 @@ import Foundation
 extension StructuredText {
   /// The default code block style used by ``StructuredText/DefaultStyle``.
   ///
-  /// Renders a soft, GitHub-flavored rounded card with a compact header. The header shows the
+  /// Renders a soft rounded card with a compact header. The header shows the
   /// language hint on the leading edge and two trailing actions:
   ///
   /// - A wrap toggle that switches the block between horizontal scrolling and word wrapping.
@@ -146,7 +146,7 @@ private struct DefaultCodeBlockBody: View {
   // Keep layout changes non-animated. Animating the code block's real height lets parents (and
   // Xcode previews) interpolate the whole `StructuredText` from its center. Remodex only animates
   // chrome affordances here; the layout itself snaps and stays top-anchored.
-  private static let cornerRadius: CGFloat = 18
+  private static let cornerRadius: CGFloat = 20
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -210,7 +210,7 @@ private struct DefaultCodeBlockHeader: View {
     HStack(spacing: 8) {
       Text(displayName)
         .font(.subheadline)
-        .fontWeight(.regular)
+        .fontWeight(.medium)
         .foregroundStyle(.secondary)
         .lineLimit(1)
         .truncationMode(.tail)

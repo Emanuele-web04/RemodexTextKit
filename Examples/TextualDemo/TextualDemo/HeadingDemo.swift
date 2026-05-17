@@ -34,13 +34,6 @@ struct HeadingDemo: View {
         Text("Default Style")
         Text("Text Selection Enabled")
       }
-      Section("GitHub Style") {
-        StructuredText(
-          markdown: content,
-          syntaxExtensions: [.emoji(.mastoEmoji)]
-        )
-      }
-      .textual.structuredTextStyle(.gitHub)
     }
     .formStyle(.grouped)
   }

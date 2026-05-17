@@ -45,7 +45,7 @@ import SwiftUI
 ///
 /// ```swift
 /// StructuredText(markdown: markdown)
-///   .textual.structuredTextStyle(.gitHub)
+///   .textual.structuredTextStyle(.default)
 /// ```
 ///
 /// For more control, you can customize individual block and inline styles. Inline styles

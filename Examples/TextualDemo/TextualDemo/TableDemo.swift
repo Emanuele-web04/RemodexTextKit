@@ -78,13 +78,6 @@ struct TableDemo: View {
         Text("Horizontal Scroll")
       }
       .textual.tableStyle(.overflow(relativeWidth: relativeWidth))
-      Section("GitHub Style") {
-        StructuredText(
-          markdown: content,
-          syntaxExtensions: [.emoji(.mastoEmoji)]
-        )
-      }
-      .textual.structuredTextStyle(.gitHub)
     }
     .formStyle(.grouped)
   }

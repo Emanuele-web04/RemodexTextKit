@@ -61,6 +61,16 @@ extension StructuredText.HighlighterTheme {
 }
 
 extension DynamicColor {
+  fileprivate static let codePlain = DynamicColor(
+    light: Color(red: 0, green: 0, blue: 0, opacity: 0.85),
+    dark: Color(red: 1, green: 1, blue: 1, opacity: 0.85)
+  )
+
+  fileprivate static let codeBackground = DynamicColor(
+    light: Color(red: 0.960784, green: 0.960784, blue: 0.968627),
+    dark: Color(red: 0.120543, green: 0.122844, blue: 0.141312)
+  )
+
   fileprivate static let codeKeyword = DynamicColor(
     light: Color(red: 0.607592, green: 0.137526, blue: 0.576284),
     dark: Color(red: 0.988394, green: 0.37355, blue: 0.638329)

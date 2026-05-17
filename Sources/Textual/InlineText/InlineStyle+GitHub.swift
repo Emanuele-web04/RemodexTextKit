@@ -12,8 +12,14 @@ extension InlineStyle {
   /// ```
   public static var gitHub: InlineStyle {
     InlineStyle()
-      .code(.monospaced, .fontScale(0.85), .backgroundColor(.gitHubSecondaryBackground))
+      .code(
+        .monospaced,
+        .fontScale(0.85),
+        .tracking(-0.2),
+        .foregroundColor(Color.secondary),
+        .backgroundColor(DynamicColor.gitHubSecondaryBackground)
+      )
       .strong(.fontWeight(.semibold))
-      .link(.foregroundColor(.gitHubLink))
+      .link(.foregroundColor(DynamicColor.gitHubLink), .underlineStyle(.init(pattern: .dot)))
   }
 }

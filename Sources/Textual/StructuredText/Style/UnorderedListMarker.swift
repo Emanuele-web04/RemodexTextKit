@@ -44,7 +44,7 @@ extension StructuredText {
     public init(
       symbolName: String,
       scale: CGFloat = 1,
-      minWidth: FontScaled<CGFloat> = .fontScaled(1.5)
+      minWidth: FontScaled<CGFloat> = .fontScaled(1)
     ) {
       self.symbolName = symbolName
       self.scale = scale
