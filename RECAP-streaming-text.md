@@ -5,7 +5,7 @@
 
 ## Summary
 
-The goal was to make AI response streaming much lighter for Remodex-style token updates while preserving copy/selection. Textual now has a UIKit-backed `StreamingText` view for live output, optimized UIKit text fragments for settled rich text and code blocks, and a safer balanced SwiftUI `Text` builder for fragmented fallback rendering. The current path keeps normal `StructuredText` behavior unchanged by default and opts into the faster UIKit fragment renderer through `StreamingText` or the public `.textual.optimizedTextFragments(...)` modifier.
+The goal was to make AI response streaming much lighter for Remodex-style token updates while preserving copy/selection. RemodexTextKit now has a UIKit-backed `StreamingText` view for live output, optimized UIKit text fragments for settled rich text and code blocks, and a safer balanced SwiftUI `Text` builder for fragmented fallback rendering. The current path keeps normal `StructuredText` behavior unchanged by default and opts into the faster UIKit fragment renderer through `StreamingText` or the public `.textual.optimizedTextFragments(...)` modifier.
 
 ---
 
@@ -13,15 +13,15 @@ The goal was to make AI response streaming much lighter for Remodex-style token 
 
 | File | Status | Role |
 |---|---|---|
-| `Sources/Textual/StreamingText/StreamingText.swift` | Created | Public streaming renderer backed by `UITextView` on UIKit platforms |
-| `Sources/Textual/Internal/UIKit/UIKitAttributedTextView.swift` | Created | Shared UIKit rich-text fragment renderer for settled plain text and highlighted code |
-| `Sources/Textual/Internal/UIKit/UIKitTextRenderingOptions.swift` | Created | Environment options that opt specific render paths into UIKit text fragments |
-| `Sources/Textual/Internal/TextFragment/TextBuilder.swift` | Modified | Replaced linear recursive `Text` reduction with balanced concatenation |
-| `Sources/Textual/Internal/TextFragment/TextFragment.swift` | Modified | Adds the opt-in UIKit fragment path while keeping the original SwiftUI path |
-| `Sources/Textual/Internal/Highlighter/HighlightedTextFragment.swift` | Modified | Uses the UIKit fragment renderer for settled code blocks when the fast path is enabled |
-| `Sources/Textual/View+Textual.swift` | Modified | Adds the public `.textual.optimizedTextFragments(...)` modifier for existing `StructuredText` integrations |
-| `Tests/TextualTests/Internal/TextFragment/TextBuilderTests.swift` | Created | Guards highly fragmented text construction |
-| `Tests/TextualTests/StreamingText/StreamingTextTests.swift` | Created | Verifies public streaming view and UIKit rendering option construction |
+| `Sources/RemodexTextKit/StreamingText/StreamingText.swift` | Created | Public streaming renderer backed by `UITextView` on UIKit platforms |
+| `Sources/RemodexTextKit/Internal/UIKit/UIKitAttributedTextView.swift` | Created | Shared UIKit rich-text fragment renderer for settled plain text and highlighted code |
+| `Sources/RemodexTextKit/Internal/UIKit/UIKitTextRenderingOptions.swift` | Created | Environment options that opt specific render paths into UIKit text fragments |
+| `Sources/RemodexTextKit/Internal/TextFragment/TextBuilder.swift` | Modified | Replaced linear recursive `Text` reduction with balanced concatenation |
+| `Sources/RemodexTextKit/Internal/TextFragment/TextFragment.swift` | Modified | Adds the opt-in UIKit fragment path while keeping the original SwiftUI path |
+| `Sources/RemodexTextKit/Internal/Highlighter/HighlightedTextFragment.swift` | Modified | Uses the UIKit fragment renderer for settled code blocks when the fast path is enabled |
+| `Sources/RemodexTextKit/View+RemodexTextKit.swift` | Modified | Adds the public `.textual.optimizedTextFragments(...)` modifier for existing `StructuredText` integrations |
+| `Tests/RemodexTextKitTests/Internal/TextFragment/TextBuilderTests.swift` | Created | Guards highly fragmented text construction |
+| `Tests/RemodexTextKitTests/StreamingText/StreamingTextTests.swift` | Created | Verifies public streaming view and UIKit rendering option construction |
 | `README.md` | Modified | Documents `StreamingText` usage and final UIKit fragment rendering behavior |
 | `RECAP-streaming-text.md` | Created | Captures the implementation summary and flow |
 
@@ -50,7 +50,7 @@ The fast path is a parallel public view instead of a replacement for `Structured
 
 ### Tradeoffs & Edge Cases
 
-The live stream path favors responsiveness over live Markdown styling. That is intentional: final Markdown renders once the response completes. The settled UIKit fragment path is opt-in, keeps native text selection/copy, and avoids Textual's custom selection overlay for that optimized streaming result. Fragments with attachments still use the original SwiftUI rendering path because overlay positions and attachment identity are more important than the small performance win there.
+The live stream path favors responsiveness over live Markdown styling. That is intentional: final Markdown renders once the response completes. The settled UIKit fragment path is opt-in, keeps native text selection/copy, and avoids RemodexTextKit's custom selection overlay for that optimized streaming result. Fragments with attachments still use the original SwiftUI rendering path because overlay positions and attachment identity are more important than the small performance win there.
 
 ---
 
@@ -89,6 +89,6 @@ flowchart TD
 
 Imagine the AI answer is being typed into the app super fast. The old rich-text path could try to redecorate the whole essay after almost every new word, which is like redoing the whole classroom board every time someone adds one letter.
 
-The new streaming view uses a simpler board while the answer is still being written. It adds new text in small batches, so the app can still scroll and let you copy text. When the AI is done, Textual does the fancy formatting once.
+The new streaming view uses a simpler board while the answer is still being written. It adds new text in small batches, so the app can still scroll and let you copy text. When the AI is done, RemodexTextKit does the fancy formatting once.
 
 For the finished answer, the plain paragraphs and code blocks can now use UIKit's native text box instead of building lots of tiny SwiftUI text pieces. Remodex can get that either by switching to `StreamingText` or by adding `.textual.optimizedTextFragments(...)` to an existing final `StructuredText`. If a piece contains a special embedded object, it still uses the older path, because those objects need careful placement. The backup SwiftUI path also glues tiny formatted pieces together in a balanced way, so a long answer does not turn into one huge chain of work.

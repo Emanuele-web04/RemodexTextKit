@@ -7,7 +7,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-RESOURCES_DIR="$PROJECT_ROOT/Sources/Textual/Internal/Highlighter/Prism"
+RESOURCES_DIR="$PROJECT_ROOT/Sources/RemodexTextKit/Internal/Highlighter/Prism"
 OUTPUT_FILE="$RESOURCES_DIR/prism-bundle.js"
 TEMP_DIR=$(mktemp -d)
 

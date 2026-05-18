@@ -1,6 +1,6 @@
-# Contributing to Textual
+# Contributing to RemodexTextKit
 
-Thank you for your interest in contributing to Textual! We welcome contributions from the community and are grateful for any help you can provide.
+Thank you for your interest in contributing to RemodexTextKit! We welcome contributions from the community and are grateful for any help you can provide.
 
 ## Code of Conduct
 
@@ -12,7 +12,7 @@ This project adheres to the [Contributor Covenant Code of Conduct](.github/CODE_
 
 Before submitting a bug report:
 - Check the existing issues to avoid duplicates
-- Verify you're using the latest version of Textual
+- Verify you're using the latest version of RemodexTextKit
 
 When creating a bug report, include:
 - A clear and descriptive title
@@ -26,7 +26,7 @@ When creating a bug report, include:
 
 We welcome feature requests and enhancement suggestions! Before submitting:
 - Check existing issues for similar suggestions
-- Consider if the feature aligns with Textual's core goals
+- Consider if the feature aligns with RemodexTextKit's core goals
 
 When proposing an enhancement:
 - Provide a clear and descriptive title
@@ -39,7 +39,7 @@ When proposing an enhancement:
 
 1. **Fork the repository** and create your branch from `main`
 2. **Set up your development environment**:
-   - Open `Textual.xcworkspace` at the repository root
+   - Open `RemodexTextKit.xcworkspace` at the repository root
    - The workspace includes both the library source and the demo app
 3. **Make your changes**:
    - Write clear, self-documenting code
@@ -48,7 +48,7 @@ When proposing an enhancement:
    - Ensure the demo app still builds and runs
 4. **Test your changes**:
    - Run the test suite and verify all tests pass
-   - Build and run the demo app in `Examples/TextualDemo`
+   - Build and run the demo app in `Examples/RemodexTextKitDemo`
    - Test on multiple platforms (iOS, macOS, visionOS) if applicable
 5. **Commit your changes** with a descriptive commit message (see style guide below)
 6. **Push to your fork** and submit a pull request to the `main` branch
@@ -57,13 +57,13 @@ When proposing an enhancement:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/gonzalezreal/textual.git
+   git clone https://github.com/Emanuele-web04/RemodexTextKit.git
    cd textual
    ```
 
 2. Open the workspace:
    ```bash
-   open Textual.xcworkspace
+   open RemodexTextKit.xcworkspace
    ```
 
 3. Build and run the demo app to verify your setup
@@ -132,4 +132,4 @@ Contributors are recognized in the project's commit history and release notes. S
 
 ---
 
-Thank you for contributing to Textual! Your efforts help make this library better for everyone.
+Thank you for contributing to RemodexTextKit! Your efforts help make this library better for everyone.

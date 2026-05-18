@@ -15,23 +15,23 @@ test: test-macos test-ios test-tvos test-watchos test-visionos
 
 test-macos:
 	@echo "Testing macOS..."
-	xcodebuild test -scheme Textual -destination platform="$(PLATFORM_MACOS)"
+	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_MACOS)"
 
 test-ios:
 	@echo "Testing iOS $(IOS_VERSION)..."
-	xcodebuild test -scheme Textual -destination platform="$(PLATFORM_IOS)"
+	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_IOS)"
 
 test-tvos:
 	@echo "Testing tvOS $(TVOS_VERSION)..."
-	xcodebuild test -scheme Textual -destination platform="$(PLATFORM_TVOS)"
+	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_TVOS)"
 
 test-watchos:
 	@echo "Testing watchOS $(WATCHOS_VERSION)..."
-	xcodebuild test -scheme Textual -destination platform="$(PLATFORM_WATCHOS)"
+	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_WATCHOS)"
 
 test-visionos:
 	@echo "Testing visionOS $(PLATFORM_VISIONOS)..."
-	xcodebuild test -scheme Textual -destination platform="$(PLATFORM_VISIONOS)"
+	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_VISIONOS)"
 
 format:
 	swift format \
@@ -46,10 +46,10 @@ bundle-prism:
 	./Scripts/bundle-prism.sh
 
 build-demo:
-	@echo "Building TextualDemo for iOS..."
-	xcodebuild build -workspace Textual.xcworkspace -scheme TextualDemo -destination platform="$(PLATFORM_IOS)" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
-	@echo "Building TextualDemo for macOS..."
-	xcodebuild build -workspace Textual.xcworkspace -scheme TextualDemo -destination platform="$(PLATFORM_MACOS)" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+	@echo "Building RemodexTextKit demo for iOS..."
+	xcodebuild build -workspace RemodexTextKit.xcworkspace -scheme RemodexTextKitDemo -destination platform="$(PLATFORM_IOS)" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+	@echo "Building RemodexTextKit demo for macOS..."
+	xcodebuild build -workspace RemodexTextKit.xcworkspace -scheme RemodexTextKitDemo -destination platform="$(PLATFORM_MACOS)" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
 
 .PHONY: format test bundle-prism build-demo
 

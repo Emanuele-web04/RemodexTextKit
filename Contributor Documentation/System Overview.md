@@ -1,6 +1,6 @@
 # System Overview
 
-Textual renders attributed content in SwiftUI while preserving the `Text` pipeline. It supports
+RemodexTextKit renders attributed content in SwiftUI while preserving the `Text` pipeline. It supports
 inline attachments, text selection, link interaction, syntax highlighting, and customizable
 block styling, all while keeping SwiftUI's text rendering benefits.
 
@@ -26,7 +26,7 @@ attachments, styling, building, and overlaying.
 `MarkupParser` implementations convert structured markup into `AttributedString` with
 [`PresentationIntent`](https://developer.apple.com/documentation/foundation/presentationintent)
 for blocks and other Foundation attributes for inline formatting. Custom attributes handle
-pre-processed entities like emoji URLs. While Textual currently focuses on markdown (via
+pre-processed entities like emoji URLs. While RemodexTextKit currently focuses on markdown (via
 `AttributedStringMarkdownParser`), the parser protocol supports any markup that can be transformed
 into `AttributedString` with presentation intents, such as HTML or other structured formats.
 
@@ -41,7 +41,7 @@ flow through the `Text` rendering pipeline.
 Some markup is only a reference to something that needs loading. Images (`run.imageURL`) and
 custom emoji URLs are kept as attributes during parsing, then resolved asynchronously by
 `WithAttachments` using environment-provided attachment loaders. Once an attachment has been
-loaded, it's written back into the `AttributedString` as a `Textual.Attachment` attribute, and
+loaded, it's written back into the `AttributedString` as a `RemodexTextKit.Attachment` attribute, and
 the rest of the pipeline treats it like any other run.
 
 ### Styling
@@ -90,6 +90,6 @@ component work in its natural space—structural navigation uses indices, text o
 character offsets, and rendering uses points.
 
 One subtlety is that SwiftUI can produce multiple line fragments with their own attributed
-strings (for example, when hard line breaks are present). Textual reconciles these into a single
+strings (for example, when hard line breaks are present). RemodexTextKit reconciles these into a single
 attributed string for selection and adjusts slice character ranges so index and offset-based
 operations stay consistent.

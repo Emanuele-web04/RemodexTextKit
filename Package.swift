@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "textual",
+  name: "RemodexTextKit",
   platforms: [
     .macOS(.v15),
     .iOS(.v18),
@@ -12,7 +12,7 @@ let package = Package(
     .visionOS(.v2),
   ],
   products: [
-    .library(name: "Textual", targets: ["Textual"])
+    .library(name: "RemodexTextKit", targets: ["RemodexTextKit"])
   ],
   dependencies: [
     .package(url: "https://github.com/pointfreeco/swift-concurrency-extras", from: "1.3.1"),
@@ -21,7 +21,7 @@ let package = Package(
   ],
   targets: [
     .target(
-      name: "Textual",
+      name: "RemodexTextKit",
       dependencies: [
         .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
         .product(name: "SwiftUIMath", package: "swiftui-math"),
@@ -30,14 +30,14 @@ let package = Package(
         .process("Internal/Highlighter/Prism")
       ],
       swiftSettings: [
-        .define("TEXTUAL_ENABLE_LINKS", .when(platforms: [.macOS, .iOS, .watchOS, .visionOS])),
-        .define("TEXTUAL_ENABLE_TEXT_SELECTION", .when(platforms: [.macOS, .iOS, .visionOS])),
+        .define("REMODEX_TEXT_KIT_ENABLE_LINKS", .when(platforms: [.macOS, .iOS, .watchOS, .visionOS])),
+        .define("REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION", .when(platforms: [.macOS, .iOS, .visionOS])),
       ]
     ),
     .testTarget(
-      name: "TextualTests",
+      name: "RemodexTextKitTests",
       dependencies: [
-        "Textual",
+        "RemodexTextKit",
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ],
       exclude: [
@@ -46,7 +46,7 @@ let package = Package(
       ],
       resources: [.copy("Fixtures")],
       swiftSettings: [
-        .define("TEXTUAL_ENABLE_TEXT_SELECTION", .when(platforms: [.macOS, .iOS, .visionOS]))
+        .define("REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION", .when(platforms: [.macOS, .iOS, .visionOS]))
       ]
     ),
   ]
