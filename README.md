@@ -3,7 +3,7 @@
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FEmanuele-web04%2FRemodexTextKit%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/Emanuele-web04/RemodexTextKit)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FEmanuele-web04%2FRemodexTextKit%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/Emanuele-web04/RemodexTextKit)
 
-Render and customize rich attributed text in SwiftUI, tuned for fast AI response streaming in Remodex.
+SwiftUI-first rich text rendering with UIKit-backed fast paths for AI response streaming in Remodex.
 
 - [Overview](#overview)
 - [Getting Started](#getting-started)
@@ -16,7 +16,8 @@ Render and customize rich attributed text in SwiftUI, tuned for fast AI response
 
 **RemodexTextKit** is a Remodex-focused rework of Textual, built for the way an AI coding app actually renders text:
 large assistant messages, token-by-token updates, selectable/copyable output, code blocks, Markdown, and long sessions
-where UI freezes are not acceptable.
+where UI freezes are not acceptable. The public API stays SwiftUI-first, while the expensive live-rendering paths use
+UIKit internally on iOS-family platforms.
 
 The package keeps Textual's rich SwiftUI text model where it works well, then adds a lighter UIKit-backed path for the
 parts that are expensive during real streaming: appending text, measuring growing content, rendering settled fragments,
