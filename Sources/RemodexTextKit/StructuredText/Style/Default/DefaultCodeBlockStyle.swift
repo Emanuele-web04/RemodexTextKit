@@ -143,9 +143,8 @@ private struct DefaultCodeBlockBody: View {
     return environmentOverflowMode
   }
 
-  // Keep layout changes non-animated. Animating the code block's real height lets parents (and
-  // Xcode previews) interpolate the whole `StructuredText` from its center. Remodex only animates
-  // chrome affordances here; the layout itself snaps and stays top-anchored.
+  // Matches Remodex's project-section expand/collapse cadence in the sidebar.
+  private static let wrapAnimation: Animation = .snappy(duration: 0.22)
   private static let cornerRadius: CGFloat = 20
 
   var body: some View {
@@ -155,9 +154,7 @@ private struct DefaultCodeBlockBody: View {
         isWrapping: effectiveOverflowMode == .wrap,
         toggleWrap: {
           let next = !(effectiveOverflowMode == .wrap)
-          var transaction = Transaction()
-          transaction.animation = nil
-          withTransaction(transaction) {
+          withAnimation(Self.wrapAnimation) {
             wrapOverride = next
           }
         },
@@ -175,10 +172,8 @@ private struct DefaultCodeBlockBody: View {
           .padding(.horizontal, 14)
       }
       .environment(\.overflowMode, effectiveOverflowMode)
-      .transaction { transaction in
-        transaction.animation = nil
-      }
     }
+    .clipped()
     .background(
       RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
         .fill(.regularMaterial)
