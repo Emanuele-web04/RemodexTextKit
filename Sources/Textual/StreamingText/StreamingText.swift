@@ -107,6 +107,52 @@ public struct StreamingText: View {
   }
 }
 
+enum StreamingTextPendingEdit: Equatable {
+  case replace
+  case append(String)
+}
+
+enum StreamingTextAppendPolicy {
+  static func shouldIgnoreUpdate(
+    hasScheduledUpdate: Bool,
+    pendingMarkup: String?,
+    nextMarkup: String,
+    configurationChanged: Bool,
+    environmentChanged: Bool
+  ) -> Bool {
+    hasScheduledUpdate
+      && !configurationChanged
+      && !environmentChanged
+      && pendingMarkup == nextMarkup
+  }
+
+  // Trusts explicit append deltas so the streaming path never scans the full accumulated response.
+  static func edit(
+    renderedMarkupIsEmpty: Bool,
+    hasScheduledUpdate: Bool,
+    pendingAppend: String,
+    isPendingAppend: Bool,
+    appendedMarkup: String?,
+    environmentChanged: Bool
+  ) -> StreamingTextPendingEdit {
+    guard
+      !environmentChanged,
+      let appendedMarkup,
+      !appendedMarkup.isEmpty
+    else {
+      return .replace
+    }
+
+    if hasScheduledUpdate {
+      guard isPendingAppend else { return .replace }
+    } else {
+      guard !renderedMarkupIsEmpty else { return .replace }
+    }
+
+    return .append(pendingAppend + appendedMarkup)
+  }
+}
+
 extension StreamingText {
   /// Creates streaming text from Markdown.
   public init(
@@ -143,14 +189,7 @@ extension StreamingText {
 
     func makeUIView(context: Context) -> StreamingUITextView {
       let textView = StreamingUITextView()
-      textView.backgroundColor = .clear
-      textView.isEditable = false
-      textView.isScrollEnabled = false
-      textView.textContainerInset = .zero
-      textView.textContainer.lineFragmentPadding = 0
-      textView.adjustsFontForContentSizeCategory = true
-      textView.setContentCompressionResistancePriority(.required, for: .vertical)
-      textView.setContentHuggingPriority(.required, for: .vertical)
+      textView.configureForTextualIntrinsicRendering()
       context.coordinator.update(
         textView,
         markup: markup,
@@ -180,23 +219,16 @@ extension StreamingText {
         return nil
       }
 
-      let size = uiView.sizeThatFits(
-        CGSize(width: width, height: CGFloat.greatestFiniteMagnitude)
-      )
+      let size = uiView.measuredSize(fittingWidth: width)
       return CGSize(width: width, height: ceil(size.height))
     }
 
     @MainActor
     final class Coordinator {
-      private enum PendingEdit {
-        case replace
-        case append(String)
-      }
-
       private var renderedMarkup = ""
       private var renderedEnvironment = TextEnvironmentValues()
       private var pendingMarkup: String?
-      private var pendingEdit = PendingEdit.replace
+      private var pendingEdit = StreamingTextPendingEdit.replace
       private var pendingConfiguration = StreamingText.Configuration()
       private var pendingEnvironment = TextEnvironmentValues()
       private var updateTask: Task<Void, Never>?
@@ -224,16 +256,28 @@ extension StreamingText {
           return
         }
 
+        guard !StreamingTextAppendPolicy.shouldIgnoreUpdate(
+          hasScheduledUpdate: updateTask != nil,
+          pendingMarkup: pendingMarkup,
+          nextMarkup: markup,
+          configurationChanged: configuration != pendingConfiguration,
+          environmentChanged: environmentChanged
+        ) else {
+          return
+        }
+
         pendingMarkup = markup
         pendingConfiguration = configuration
         pendingEnvironment = textEnvironment
 
-        let accumulatedAppend = pendingAppend + (appendedMarkup ?? "")
-        if !environmentChanged, canAppendDelta(with: accumulatedAppend, updatingTo: markup) {
-          pendingEdit = .append(accumulatedAppend)
-        } else {
-          pendingEdit = .replace
-        }
+        pendingEdit = StreamingTextAppendPolicy.edit(
+          renderedMarkupIsEmpty: renderedMarkup.isEmpty,
+          hasScheduledUpdate: updateTask != nil,
+          pendingAppend: pendingAppend,
+          isPendingAppend: isPendingAppend,
+          appendedMarkup: appendedMarkup,
+          environmentChanged: environmentChanged
+        )
 
         if renderedMarkup.isEmpty && textView.textStorage.length == 0 {
           updateTask?.cancel()
@@ -289,29 +333,18 @@ extension StreamingText {
         textView.invalidateStreamingLayout()
       }
 
-      private func canAppendDelta(with accumulatedAppend: String, updatingTo markup: String) -> Bool {
-        guard !accumulatedAppend.isEmpty else { return false }
-
-        let canUseExistingAppendState: Bool
-        if updateTask == nil {
-          canUseExistingAppendState = !renderedMarkup.isEmpty
-        } else if case .append = pendingEdit {
-          canUseExistingAppendState = true
-        } else {
-          canUseExistingAppendState = false
-        }
-
-        return canUseExistingAppendState
-          && markup.utf8.count == renderedMarkup.utf8.count + accumulatedAppend.utf8.count
-          && markup.hasPrefix(renderedMarkup)
-          && markup.hasSuffix(accumulatedAppend)
-      }
-
       private var pendingAppend: String {
         if case .append(let value) = pendingEdit {
           return value
         }
         return ""
+      }
+
+      private var isPendingAppend: Bool {
+        if case .append = pendingEdit {
+          return true
+        }
+        return false
       }
 
       // Normalizes public cadence input before converting to Task.sleep nanoseconds.
@@ -323,17 +356,10 @@ extension StreamingText {
       }
 
       private func editTextStorage(_ textView: StreamingUITextView, _ edits: () -> Void) {
-        let selectedRange = textView.selectedRange
-        let hadSelection = selectedRange.location != NSNotFound
-
-        textView.textStorage.beginEditing()
-        edits()
-        textView.textStorage.endEditing()
-
-        if hadSelection {
-          let safeLocation = min(selectedRange.location, textView.textStorage.length)
-          let safeLength = min(selectedRange.length, textView.textStorage.length - safeLocation)
-          textView.selectedRange = NSRange(location: safeLocation, length: safeLength)
+        textView.textualPreservingSelectedRange {
+          textView.textStorage.beginEditing()
+          edits()
+          textView.textStorage.endEditing()
         }
       }
 
@@ -357,22 +383,34 @@ extension StreamingText {
   }
 
   private final class StreamingUITextView: UITextView {
+    private var measurementCache = TextualTextMeasurementCache()
+
     override var intrinsicContentSize: CGSize {
       guard bounds.width > 0 else {
         return super.intrinsicContentSize
       }
 
-      let size = sizeThatFits(
-        CGSize(width: bounds.width, height: CGFloat.greatestFiniteMagnitude)
-      )
+      let size = measuredSize(fittingWidth: bounds.width)
       return CGSize(width: UIView.noIntrinsicMetric, height: ceil(size.height))
+    }
+
+    func measuredSize(fittingWidth width: CGFloat) -> CGSize {
+      let key = TextualTextMeasurementKey(
+        width: width,
+        wrapsText: true,
+        textLength: textStorage.length,
+        fontPointSize: font?.pointSize
+      )
+
+      return measurementCache.size(for: key) {
+        sizeThatFits(CGSize(width: width, height: CGFloat.greatestFiniteMagnitude))
+      }
     }
 
     // Tells both UIKit and SwiftUI layout bridges that textStorage grew without a SwiftUI state tick.
     func invalidateStreamingLayout() {
-      invalidateIntrinsicContentSize()
-      setNeedsLayout()
-      superview?.setNeedsLayout()
+      measurementCache.invalidate()
+      invalidateTextualIntrinsicLayout(includingSuperview: true)
     }
   }
 #endif

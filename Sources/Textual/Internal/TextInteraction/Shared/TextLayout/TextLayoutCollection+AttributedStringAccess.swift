@@ -3,7 +3,7 @@
 
   extension TextLayoutCollection {
     var stringLength: Int {
-      layouts.map(\.attributedString.length).reduce(0, +)
+      layouts.reduce(0) { $0 + $1.attributedString.length }
     }
 
     func attributedText(in range: TextRange) -> NSAttributedString {

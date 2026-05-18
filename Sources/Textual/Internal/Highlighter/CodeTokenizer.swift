@@ -21,8 +21,17 @@ struct CodeToken: Hashable, Sendable {
 
 #if canImport(JavaScriptCore)
   actor CodeTokenizer {
+    private struct CacheKey: Hashable {
+      let language: String
+      let code: String
+    }
+
+    private static let cacheLimit = 32
+
     private let context: JSContext
     private let logger = Logger(category: .codeTokenizer)
+    private var cachedTokens: [CacheKey: [CodeToken]] = [:]
+    private var cacheOrder: [CacheKey] = []
 
     static let shared = CodeTokenizer()
 
@@ -48,6 +57,12 @@ struct CodeToken: Hashable, Sendable {
     }
 
     func tokenize(code: String, language: String) -> [CodeToken] {
+      let key = CacheKey(language: language, code: code)
+      if let tokens = cachedTokens[key] {
+        markRecentlyUsed(key)
+        return tokens
+      }
+
       guard
         let tokenizeCode = context.objectForKeyedSubscript("tokenizeCode"),
         let result = tokenizeCode.call(withArguments: [code, language]),
@@ -57,7 +72,7 @@ struct CodeToken: Hashable, Sendable {
         return [CodeToken(content: code, type: .plain)]
       }
 
-      return array.compactMap { token in
+      let tokens: [CodeToken] = array.compactMap { token in
         guard
           let content = token["content"],
           let type = token["type"]
@@ -66,6 +81,23 @@ struct CodeToken: Hashable, Sendable {
         }
         return CodeToken(content: content, type: .init(rawValue: type))
       }
+      cache(tokens, for: key)
+      return tokens
+    }
+
+    private func cache(_ tokens: [CodeToken], for key: CacheKey) {
+      cachedTokens[key] = tokens
+      markRecentlyUsed(key)
+
+      while cacheOrder.count > Self.cacheLimit {
+        let removed = cacheOrder.removeFirst()
+        cachedTokens.removeValue(forKey: removed)
+      }
+    }
+
+    private func markRecentlyUsed(_ key: CacheKey) {
+      cacheOrder.removeAll { $0 == key }
+      cacheOrder.append(key)
     }
   }
 #else

@@ -76,7 +76,7 @@ struct TextFragment<Content: AttributedStringProtocol>: View {
   }
 
   private var usesUIKitTextFragment: Bool {
-    uikitTextRenderingOptions.prefersTextFragments && content.attachments().isEmpty
+    uikitTextRenderingOptions.prefersTextFragments && !content.hasAttachments()
   }
 
   private var materializedContent: AttributedString {

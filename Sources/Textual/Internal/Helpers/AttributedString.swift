@@ -20,6 +20,16 @@ extension AttributedStringProtocol {
     uniqueValues(for: \.textual.attachment)
   }
 
+  func hasAttachments() -> Bool {
+    containsValue(for: \.textual.attachment)
+  }
+
+  func containsValue<T>(for keyPath: KeyPath<AttributeContainer, T?>) -> Bool {
+    runs.contains { run in
+      run.attributes[keyPath: keyPath] != nil
+    }
+  }
+
   func containsValues<T>(for keyPaths: Set<KeyPath<AttributeContainer, T?>>) -> Bool {
     runs.contains { run in
       keyPaths.first { keyPath in

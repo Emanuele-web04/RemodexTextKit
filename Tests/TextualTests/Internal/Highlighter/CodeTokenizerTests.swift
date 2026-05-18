@@ -5,6 +5,21 @@ import Testing
 
 struct CodeTokenizerTests {
   @Test
+  @MainActor
+  @available(watchOS, unavailable)
+  func highlightedTextFragmentResetsTokensWhenLanguageHintIsRemoved() async {
+    let model = HighlightedTextFragment.Model()
+    let attributedCode = AttributedString("let greeting = \"Hello\"")
+    let code = attributedCode[attributedCode.startIndex..<attributedCode.endIndex]
+
+    await model.tokenize(content: code, languageHint: "swift")
+    #expect(model.tokens.contains { $0.type != .plain })
+
+    await model.tokenize(content: code, languageHint: nil)
+    #expect(model.tokens == [.init(content: "let greeting = \"Hello\"", type: .plain)])
+  }
+
+  @Test
   @available(watchOS, unavailable)
   func tokenize() async {
     // given

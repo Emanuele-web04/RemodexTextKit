@@ -27,9 +27,11 @@ extension Bundle {
       overrides + [
         // Bundle should be present here when the package is linked into an App.
         Bundle.main.resourceURL,
+        Bundle.main.bundleURL.deletingLastPathComponent(),
 
         // Bundle should be present here when the package is linked into a framework.
         Bundle(for: Token.self).resourceURL,
+        Bundle(for: Token.self).bundleURL.deletingLastPathComponent(),
 
         // For command-line tools.
         Bundle.main.bundleURL,

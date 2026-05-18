@@ -53,15 +53,11 @@ extension WithAttachments {
       emojiAttachmentLoader: any AttachmentLoader,
       environment: ColorEnvironmentValues
     ) async {
-      guard attributedString.containsValues(for: [\.imageURL, \.textual.emojiURL]) else {
-        return
-      }
-
-      var attachments: [AnyAttachment] = []
-      var ranges: [Range<AttributedString.Index>] = []
+      resolvedAttributedString = nil
+      var resolvedAttachments: [(Range<AttributedString.Index>, AnyAttachment)] = []
 
       await withTaskGroup(
-        of: (AnyAttachment?, Range<AttributedString.Index>).self
+        of: (Range<AttributedString.Index>, AnyAttachment?).self
       ) { group in
         for run in attributedString.runs {
           if let imageURL = run.imageURL {
@@ -71,7 +67,7 @@ extension WithAttachments {
                 text: String(attributedString[run.range].characters[...]),
                 environment: environment
               )
-              return (attachment.map(AnyAttachment.init), run.range)
+              return (run.range, attachment.map(AnyAttachment.init))
             }
           } else if let emojiURL = run.textual.emojiURL {
             group.addTask {
@@ -80,22 +76,24 @@ extension WithAttachments {
                 text: String(attributedString[run.range].characters[...]),
                 environment: environment
               )
-              return (attachment.map(AnyAttachment.init), run.range)
+              return (run.range, attachment.map(AnyAttachment.init))
             }
           }
         }
 
-        for await (attachment, range) in group {
+        for await (range, attachment) in group {
           guard let attachment else { continue }
-
-          attachments.append(attachment)
-          ranges.append(range)
+          resolvedAttachments.append((range, attachment))
         }
+      }
+
+      guard !resolvedAttachments.isEmpty else {
+        return
       }
 
       resolveAttachmentsFinished(
         attributedString: attributedString,
-        attachments: Array(zip(ranges, attachments))
+        attachments: resolvedAttachments
       )
     }
 

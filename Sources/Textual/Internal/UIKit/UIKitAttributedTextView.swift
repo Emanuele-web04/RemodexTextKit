@@ -25,22 +25,15 @@
       Coordinator()
     }
 
-    func makeUIView(context: Context) -> UITextView {
-      let textView = UITextView()
-      textView.backgroundColor = .clear
-      textView.isEditable = false
-      textView.isScrollEnabled = false
-      textView.textContainerInset = .zero
-      textView.textContainer.lineFragmentPadding = 0
-      textView.adjustsFontForContentSizeCategory = true
-      textView.setContentCompressionResistancePriority(.required, for: .vertical)
-      textView.setContentHuggingPriority(.required, for: .vertical)
+    func makeUIView(context: Context) -> MeasuringTextView {
+      let textView = MeasuringTextView()
+      textView.configureForTextualIntrinsicRendering()
       textView.delegate = context.coordinator
       updateUIView(textView, context: context)
       return textView
     }
 
-    func updateUIView(_ textView: UITextView, context: Context) {
+    func updateUIView(_ textView: MeasuringTextView, context: Context) {
       context.coordinator.openURL = context.environment.openURL
       context.coordinator.render(
         attributedString,
@@ -55,10 +48,10 @@
 
     func sizeThatFits(
       _ proposal: ProposedViewSize,
-      uiView: UITextView,
+      uiView: MeasuringTextView,
       context _: Context
     ) -> CGSize? {
-      let measuredSize = uiView.attributedText.textualBoundingSize(
+      let measuredSize = uiView.measuredSize(
         constrainedTo: proposal.width,
         wrapsText: wrapsText
       )
@@ -80,24 +73,31 @@
       private var renderedWrapsText = true
       private var renderedFontDesign = FontDesign.default
       private var renderedFallbackForegroundColor: Color?
+      private var renderedContainsLinks = false
 
       func render(
         _ attributedString: AttributedString,
-        in textView: UITextView,
+        in textView: MeasuringTextView,
         environment: TextEnvironmentValues,
         isSelectable: Bool,
         wrapsText: Bool,
         fontDesign: FontDesign,
         fallbackForegroundColor: Color?
       ) {
+        let attributedStringChanged = attributedString != renderedAttributedString
+        let containsLinks =
+          attributedStringChanged
+          ? attributedString.containsValue(for: \.link)
+          : renderedContainsLinks
+
         textView.textContainer.lineBreakMode = wrapsText ? .byWordWrapping : .byClipping
         textView.textContainer.widthTracksTextView = wrapsText
-        textView.isSelectable = isSelectable || attributedString.containsValues(for: [\.link])
+        textView.isSelectable = isSelectable || containsLinks
         textView.isUserInteractionEnabled = textView.isSelectable
         textView.tintColor = .tintColor
 
         guard
-          attributedString != renderedAttributedString
+          attributedStringChanged
             || environment != renderedEnvironment
             || isSelectable != renderedIsSelectable
             || wrapsText != renderedWrapsText
@@ -107,20 +107,13 @@
           return
         }
 
-        let selectedRange = textView.selectedRange
-        let hadSelection = selectedRange.location != NSNotFound
-
-        textView.attributedText = Self.resolvedAttributedString(
-          from: attributedString,
-          environment: environment,
-          fontDesign: fontDesign,
-          fallbackForegroundColor: fallbackForegroundColor
-        )
-
-        if hadSelection {
-          let safeLocation = min(selectedRange.location, textView.textStorage.length)
-          let safeLength = min(selectedRange.length, textView.textStorage.length - safeLocation)
-          textView.selectedRange = NSRange(location: safeLocation, length: safeLength)
+        textView.textualPreservingSelectedRange {
+          textView.attributedText = Self.resolvedAttributedString(
+            from: attributedString,
+            environment: environment,
+            fontDesign: fontDesign,
+            fallbackForegroundColor: fallbackForegroundColor
+          )
         }
 
         renderedAttributedString = attributedString
@@ -129,7 +122,8 @@
         renderedWrapsText = wrapsText
         renderedFontDesign = fontDesign
         renderedFallbackForegroundColor = fallbackForegroundColor
-        textView.invalidateIntrinsicContentSize()
+        renderedContainsLinks = containsLinks
+        textView.invalidateMeasuredSize()
       }
 
       @available(iOS, deprecated: 17.0, message: "Use UITextView text item delegate methods.")
@@ -236,6 +230,42 @@
         }
 
         return UIFont(descriptor: italicDescriptor, size: pointSize)
+      }
+    }
+
+    final class MeasuringTextView: UITextView {
+      private var measurementCache = TextualTextMeasurementCache()
+
+      override var intrinsicContentSize: CGSize {
+        guard bounds.width > 0 else {
+          return super.intrinsicContentSize
+        }
+
+        let size = measuredSize(
+          constrainedTo: bounds.width,
+          wrapsText: textContainer.widthTracksTextView
+        )
+        return CGSize(width: UIView.noIntrinsicMetric, height: size.height)
+      }
+
+      func measuredSize(constrainedTo width: CGFloat?, wrapsText: Bool) -> CGSize {
+        let key = TextualTextMeasurementKey(
+          width: width,
+          wrapsText: wrapsText,
+          textLength: attributedText.length
+        )
+
+        return measurementCache.size(for: key) {
+          attributedText.textualBoundingSize(
+            constrainedTo: width,
+            wrapsText: wrapsText
+          )
+        }
+      }
+
+      func invalidateMeasuredSize() {
+        measurementCache.invalidate()
+        invalidateTextualIntrinsicLayout()
       }
     }
   }

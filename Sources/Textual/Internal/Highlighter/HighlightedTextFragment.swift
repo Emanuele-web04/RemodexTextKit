@@ -3,8 +3,8 @@ import SwiftUI
 // MARK: - Overview
 //
 // HighlightedTextFragment displays syntax-highlighted code using a two-phase approach.
-// Tokenization runs asynchronously and is keyed by content, while highlighting runs
-// synchronously on token or environment changes (theme, color scheme, dynamic type).
+// Tokenization runs asynchronously and is keyed by content plus language, while highlighting
+// runs synchronously on token or environment changes (theme, color scheme, dynamic type).
 //
 // The presentationIntent is preserved after highlighting so pasteboard formatters can
 // reconstruct the block structure when copying code.
@@ -32,7 +32,7 @@ struct HighlightedTextFragment: View {
   @ViewBuilder
   var body: some View {
     renderedCode
-      .task(id: content) {
+      .task(id: tokenizationRequest) {
         await model.tokenize(
           content: content,
           languageHint: languageHint
@@ -46,6 +46,15 @@ struct HighlightedTextFragment: View {
           environment: newValue.values.1
         )
       }
+  }
+
+  private var tokenizationRequest: TokenizationRequest {
+    TokenizationRequest(content: content, languageHint: languageHint)
+  }
+
+  private struct TokenizationRequest: Equatable {
+    let content: AttributedSubstring
+    let languageHint: String?
   }
 
   @ViewBuilder
@@ -80,13 +89,29 @@ extension HighlightedTextFragment {
   @MainActor @Observable final class Model {
     var tokens: [CodeToken] = []
     var highlightedCode: AttributedString?
+    private var tokenizationKey: TokenizationKey?
 
     func tokenize(content: AttributedSubstring, languageHint: String?) async {
       let code = String(content.characters[...])
-      tokens = [CodeToken(content: code, type: .plain)]
+      let key = TokenizationKey(code: code, languageHint: languageHint)
+      let plainTokens = [CodeToken(content: code, type: .plain)]
 
-      if let tokenizer = CodeTokenizer.shared, let languageHint {
-        tokens = await tokenizer.tokenize(code: code, language: languageHint)
+      if tokenizationKey != key {
+        tokenizationKey = key
+        if tokens != plainTokens {
+          tokens = plainTokens
+        }
+      }
+
+      guard let tokenizer = CodeTokenizer.shared, let languageHint else {
+        return
+      }
+
+      let nextTokens = await tokenizer.tokenize(code: code, language: languageHint)
+      guard !Task.isCancelled, tokenizationKey == key else { return }
+
+      if tokens != nextTokens {
+        tokens = nextTokens
       }
     }
 
@@ -116,6 +141,11 @@ extension HighlightedTextFragment {
       }
 
       self.highlightedCode = highlightedCode
+    }
+
+    private struct TokenizationKey: Equatable {
+      let code: String
+      let languageHint: String?
     }
   }
 }

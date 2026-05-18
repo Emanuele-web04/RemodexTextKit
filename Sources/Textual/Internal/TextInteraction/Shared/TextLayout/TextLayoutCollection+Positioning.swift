@@ -60,10 +60,16 @@
     }
 
     func characterIndex(at position: TextPosition) -> Int {
-      let base = layouts.prefix(position.indexPath.layout)
-        .map(\.attributedString.length)
-        .reduce(0, +)
+      let base = characterOffset(before: position.indexPath.layout)
       return base + localCharacterIndex(at: position)
+    }
+
+    private func characterOffset(before layoutIndex: Int) -> Int {
+      var offset = 0
+      for layout in layouts.prefix(layoutIndex) {
+        offset += layout.attributedString.length
+      }
+      return offset
     }
 
     func localCharacterIndex(at position: TextPosition) -> Int {
