@@ -181,7 +181,7 @@ private struct DefaultCodeBlockBody: View {
     }
     .background(
       RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
-        .fill(configuration.highlighterTheme.backgroundColor)
+        .fill(.regularMaterial)
     )
     .overlay(
       RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
@@ -227,7 +227,6 @@ private struct DefaultCodeBlockHeader: View {
     }
     .padding(.horizontal, 12)
     .padding(.top, 8)
-    .padding(.bottom, 6)
     .background(
       // Excludes the header area from RemodexTextKit's selection hit-testing overlay so taps reach
       // the buttons. Same mechanism `Overflow` uses for scrollable code regions.
