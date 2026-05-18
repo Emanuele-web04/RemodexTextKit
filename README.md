@@ -3,7 +3,7 @@
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FEmanuele-web04%2FRemodexTextKit%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/Emanuele-web04/RemodexTextKit)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FEmanuele-web04%2FRemodexTextKit%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/Emanuele-web04/RemodexTextKit)
 
-Render and customize rich attributed text in SwiftUI.
+Render and customize rich attributed text in SwiftUI, tuned for fast AI response streaming in Remodex.
 
 - [Overview](#overview)
 - [Getting Started](#getting-started)
@@ -14,10 +14,19 @@ Render and customize rich attributed text in SwiftUI.
 
 ## Overview
 
-**RemodexTextKit** is the spiritual successor to [MarkdownUI](https://github.com/gonzalezreal/swift-markdown-ui), reimagined
-from the ground up to address the lessons learned from community feedback. While MarkdownUI focuses on Markdown
-rendering, RemodexTextKit is designed as a SwiftUI text rendering engine that happens to support Markdown. This shift in
-perspective influenced every design decision.
+**RemodexTextKit** is a Remodex-focused rework of Textual, built for the way an AI coding app actually renders text:
+large assistant messages, token-by-token updates, selectable/copyable output, code blocks, Markdown, and long sessions
+where UI freezes are not acceptable.
+
+The package keeps Textual's rich SwiftUI text model where it works well, then adds a lighter UIKit-backed path for the
+parts that are expensive during real streaming: appending text, measuring growing content, rendering settled fragments,
+and keeping native selection/copy responsive. It is intended to be used in
+[Remodex](https://github.com/Emanuele-web04/Remodex) as the text rendering layer for AI responses.
+
+RemodexTextKit is also still the spiritual successor to [MarkdownUI](https://github.com/gonzalezreal/swift-markdown-ui),
+reimagined from the ground up to address the lessons learned from community feedback. While MarkdownUI focuses on
+Markdown rendering, RemodexTextKit is designed as a SwiftUI text rendering engine that happens to support Markdown. This
+shift in perspective influenced every design decision.
 
 RemodexTextKit preserves SwiftUI's `Text` rendering pipeline so you can get performance, composability, and automatic
 platform adaptations. The rendering flow transforms markup into attributed content, resolves attachments asynchronously,
@@ -25,10 +34,14 @@ applies styling through environment values, and uses SwiftUI's layout system to 
 
 ### Key features
 
+- **Remodex-ready AI response streaming** through `StreamingText`
 - **Specialized views** with `InlineText` for inline-formatted text and `StructuredText` for block-based documents
 - **Native text selection** with proper copy-paste support
 - **Markdown support** via Foundation's `AttributedString` built-in parser
 - **UIKit-backed streaming text** for high-frequency AI response updates on iOS-family platforms
+- **Delta append support** with `appendedMarkdown`, avoiding repeated full-string prefix scans during token bursts
+- **Coalesced UIKit updates** to reduce SwiftUI invalidation pressure while a model response is still arriving
+- **Optimized settled fragments** for large AI answers, code blocks, and selectable rich text
 - **Custom markup parser support** through the `MarkupParser` protocol
 - **Inline attachments** that flow with the text, such as images and custom emoji
 - **Math expressions** rendered as inline or block attachments
@@ -121,6 +134,14 @@ optional `appendedMarkdown` delta without scanning the full response. When `isSt
 `false`, rendering switches to `StructuredText` with optimized UIKit text fragments for plain rich
 text and code blocks. Native selection and copy stay available without running RemodexTextKit's full
 SwiftUI text-fragment layout on every token.
+
+This is the path Remodex should use for live assistant messages. It keeps the hot loop small:
+
+- while streaming, UIKit mutates text storage directly instead of rebuilding a deep SwiftUI view tree per token
+- `appendedMarkdown` lets the caller pass only the latest delta when available
+- updates are coalesced so bursts of model tokens do not create a render pass for every tiny chunk
+- intrinsic-size measurements are cached so layout does not repeatedly recompute the same growing text
+- selection and copy use native text-view behavior, so users can copy output without freezing the response UI
 
 If you already own the streaming state outside RemodexTextKit, you can also opt a final `StructuredText`
 render into the same UIKit fragment path:
