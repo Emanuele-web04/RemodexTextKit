@@ -39,6 +39,7 @@ test-visionos:
 
 format:
 	swift format \
+		--configuration .swift-format \
 		--ignore-unparsable-files \
 		--in-place \
 		--parallel \
