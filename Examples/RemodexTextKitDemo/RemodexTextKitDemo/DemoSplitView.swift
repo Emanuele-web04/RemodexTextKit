@@ -7,6 +7,7 @@ enum DemoItem: String, CaseIterable, Hashable {
   case lists
   case blockQuotes
   case codeBlocks
+  case streamingText
   case attachmentLoaders
   case tables
   case mathExpressions
@@ -34,6 +35,8 @@ extension DemoItem {
       return Label("Block Quotes", systemImage: "text.quote")
     case .codeBlocks:
       return Label("Code Blocks", systemImage: "curlybraces")
+    case .streamingText:
+      return Label("Streaming Text", systemImage: "text.append")
     case .attachmentLoaders:
       return Label("Attachment Loaders", systemImage: "rectangle.on.rectangle")
     case .tables:
@@ -66,6 +69,9 @@ extension DemoItem {
     case .codeBlocks:
       CodeBlockDemo()
         .navigationTitle("Code Blocks")
+    case .streamingText:
+      StreamingTextDemo()
+        .navigationTitle("Streaming Text")
     case .attachmentLoaders:
       AttachmentLoaderDemo()
         .navigationTitle("Attachment Loaders")
