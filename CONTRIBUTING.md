@@ -58,7 +58,7 @@ When proposing an enhancement:
 1. Clone the repository:
    ```bash
    git clone https://github.com/Emanuele-web04/RemodexTextKit.git
-   cd textual
+   cd RemodexTextKit
    ```
 
 2. Open the workspace:
