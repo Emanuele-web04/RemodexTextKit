@@ -1,5 +1,6 @@
 # Default to the newest simulator runtime installed on this machine; override
 # with an env var (e.g. `IOS_VERSION=26.0 make test-ios`) to pin a specific version.
+# Snapshot tests are rendering-sensitive to OS versions, so pin explicitly for snapshot-consistent runs.
 IOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^iOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
 TVOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^tvOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
 WATCHOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^watchOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
@@ -24,18 +25,22 @@ test-macos:
 	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_MACOS)"
 
 test-ios:
+	@if [ -z "$(IOS_VERSION)" ]; then echo "error: no iOS simulator runtime installed (xcrun simctl list runtimes)"; exit 1; fi
 	@echo "Testing iOS $(IOS_VERSION)..."
 	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_IOS)"
 
 test-tvos:
+	@if [ -z "$(TVOS_VERSION)" ]; then echo "error: no tvOS simulator runtime installed (xcrun simctl list runtimes)"; exit 1; fi
 	@echo "Testing tvOS $(TVOS_VERSION)..."
 	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_TVOS)"
 
 test-watchos:
+	@if [ -z "$(WATCHOS_VERSION)" ]; then echo "error: no watchOS simulator runtime installed (xcrun simctl list runtimes)"; exit 1; fi
 	@echo "Testing watchOS $(WATCHOS_VERSION)..."
 	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_WATCHOS)"
 
 test-visionos:
+	@if [ -z "$(VISIONOS_VERSION)" ]; then echo "error: no visionOS simulator runtime installed (xcrun simctl list runtimes)"; exit 1; fi
 	@echo "Testing visionOS $(PLATFORM_VISIONOS)..."
 	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_VISIONOS)"
 
