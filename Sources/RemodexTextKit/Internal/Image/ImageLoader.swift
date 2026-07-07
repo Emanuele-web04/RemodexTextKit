@@ -13,12 +13,59 @@ import Foundation
 actor ImageLoader {
   static let shared = ImageLoader()
 
+  /// The maximum number of bytes buffered for a single image download. Downloads exceeding this
+  /// cap throw `URLError(.dataLengthExceedsMaximum)` instead of buffering an unbounded response
+  /// body, which would otherwise be an easy memory-exhaustion vector for untrusted markup.
+  static let maximumBodyBytes = 50 * 1024 * 1024  // 50 MB
+
   private let cache: NSCache<NSURL, Box<Image>>
   private let data: (URL) async throws -> (Data, URLResponse)
   private var ongoingTasks: [URL: Task<Image, Error>] = [:]
 
-  init(session: URLSession = URLSession(configuration: .imageLoading)) {
-    self.init(cache: NSCache(), data: session.data(from:))
+  init(
+    session: URLSession = URLSession(
+      configuration: .imageLoading,
+      delegate: RedirectPolicy(),
+      delegateQueue: nil
+    )
+  ) {
+    self.init(cache: NSCache()) { url in
+      let (bytes, response) = try await session.bytes(from: url)
+
+      if response.expectedContentLength > Int64(ImageLoader.maximumBodyBytes) {
+        throw URLError(.dataLengthExceedsMaximum)
+      }
+
+      let chunkSize = 64 * 1024
+
+      var data = Data()
+      data.reserveCapacity(
+        min(Int(max(response.expectedContentLength, 0)), ImageLoader.maximumBodyBytes))
+
+      var buffer = [UInt8]()
+      buffer.reserveCapacity(chunkSize)
+
+      for try await byte in bytes {
+        buffer.append(byte)
+        if buffer.count == chunkSize {
+          data.append(contentsOf: buffer)
+          buffer.removeAll(keepingCapacity: true)
+          if data.count > ImageLoader.maximumBodyBytes {
+            throw URLError(.dataLengthExceedsMaximum)
+          }
+        }
+      }
+
+      if !buffer.isEmpty {
+        data.append(contentsOf: buffer)
+      }
+
+      if data.count > ImageLoader.maximumBodyBytes {
+        throw URLError(.dataLengthExceedsMaximum)
+      }
+
+      return (data, response)
+    }
   }
 
   init(
@@ -48,6 +95,12 @@ actor ImageLoader {
       }
 
       let (data, response) = try await self.data(url)
+
+      // Guard against oversized payloads regardless of how `data` was produced, so the cap is
+      // enforced even when this actor is constructed through the `cache:data:` injection seam.
+      guard data.count <= Self.maximumBodyBytes else {
+        throw URLError(.dataLengthExceedsMaximum)
+      }
 
       // Notice that `data` and `file` URL schemes will not return `HTTPURLResponse`
       if let httpResponse = response as? HTTPURLResponse {
@@ -82,5 +135,39 @@ extension URLSessionConfiguration {
     configuration.httpAdditionalHeaders = ["Accept": "image/*"]
 
     return configuration
+  }
+}
+
+/// A session delegate that refuses to follow redirects to non-HTTP(S) schemes, and refuses to
+/// downgrade an `https` request to `http`.
+///
+/// `URLAttachmentLoader` only permits `http`/`https` (or an explicitly opted-in scheme) before
+/// the initial request is made, but the server can still respond with a redirect to a `file:` or
+/// other local-resource URL — or silently downgrade an `https` request to plaintext `http`. This
+/// delegate closes both gaps: it declines any redirect whose destination scheme isn't
+/// `http`/`https`, and it declines any redirect from an `https` original request to an `http`
+/// destination. Declining delivers the original response instead, which then fails the
+/// status-code check above.
+final class RedirectPolicy: NSObject, URLSessionTaskDelegate, Sendable {
+  func urlSession(
+    _ session: URLSession,
+    task: URLSessionTask,
+    willPerformHTTPRedirection response: HTTPURLResponse,
+    newRequest request: URLRequest
+  ) async -> URLRequest? {
+    Self.allowsRedirect(from: task.originalRequest?.url, to: request.url) ? request : nil
+  }
+
+  static func allowsRedirect(from originalURL: URL?, to destinationURL: URL?) -> Bool {
+    guard let destinationScheme = destinationURL?.scheme?.lowercased(),
+      destinationScheme == "http" || destinationScheme == "https"
+    else { return false }
+
+    let originalScheme = originalURL?.scheme?.lowercased()
+    if originalScheme == "https" {
+      return destinationScheme == "https"
+    }
+
+    return true
   }
 }
