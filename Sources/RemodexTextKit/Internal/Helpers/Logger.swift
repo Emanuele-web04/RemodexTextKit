@@ -5,10 +5,6 @@ extension Logger {
   enum RemodexTextKit {
     struct Category: RawRepresentable, Hashable {
       let rawValue: String
-
-      init(rawValue: String) {
-        self.rawValue = rawValue
-      }
     }
   }
 

@@ -48,10 +48,6 @@ public struct DynamicColor: Hashable, Sendable {
 
   private let variants: [Variant]
 
-  private init(variants: [Variant]) {
-    self.variants = variants
-  }
-
   func bestMatch(for colorEnvironment: ColorEnvironmentValues) -> Color? {
     variants
       .filter { $0.matches(colorEnvironment) }
