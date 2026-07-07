@@ -59,7 +59,7 @@ struct StreamingTextTests {
   @MainActor
   @Test func constructsOptimizedTextFragmentsModifier() {
     let view = StructuredText(markdown: "Final **Markdown** response")
-      .textual.optimizedTextFragments(isSelectable: false)
+      .remodex.optimizedTextFragments(isSelectable: false)
 
     _ = view
   }

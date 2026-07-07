@@ -23,7 +23,7 @@ extension StructuredText {
 
   /// A style that controls how `StructuredText` renders individual table cells.
   ///
-  /// Apply a table cell style using the ``TextualNamespace/tableCellStyle(_:)`` modifier or
+  /// Apply a table cell style using the ``RemodexNamespace/tableCellStyle(_:)`` modifier or
   /// through a bundled ``StructuredText/Style``.
   public protocol TableCellStyle: DynamicProperty {
     associatedtype Body: View

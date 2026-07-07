@@ -9,15 +9,15 @@ extension StructuredText {
     public func makeBody(configuration: Configuration) -> some View {
       Overflow {
         configuration.label
-          .textual.lineSpacing(.fontScaled(0.225))
-          .textual.fontScale(0.85)
+          .remodex.lineSpacing(.fontScaled(0.225))
+          .remodex.fontScale(0.85)
           .fixedSize(horizontal: false, vertical: true)
           .monospaced()
           .padding(16)
       }
       .background(DynamicColor.gitHubSecondaryBackground)
       .clipShape(RoundedRectangle(cornerRadius: 6))
-      .textual.blockSpacing(.init(top: 0, bottom: 16))
+      .remodex.blockSpacing(.init(top: 0, bottom: 16))
     }
   }
 }
@@ -47,6 +47,6 @@ extension StructuredText.CodeBlockStyle where Self == StructuredText.GitHubCodeB
       """
   )
   .padding()
-  .textual.codeBlockStyle(.gitHub)
-  .textual.paragraphStyle(.gitHub)
+  .remodex.codeBlockStyle(.gitHub)
+  .remodex.paragraphStyle(.gitHub)
 }

@@ -14,7 +14,7 @@ struct AttachmentLoaderDemo: View {
             ![](300/125)
             """
         )
-        .textual.imageAttachmentLoader(
+        .remodex.imageAttachmentLoader(
           .image(relativeTo: URL(string: "https://picsum.photos/seed/textual"))
         )
       }
@@ -31,8 +31,8 @@ struct AttachmentLoaderDemo: View {
             .emoji([.init(shortcode: "sad_dog", url: URL(string: "sad_dog")!)])
           ]
         )
-        .textual.imageAttachmentLoader(.image(named: \.lastPathComponent))
-        .textual.emojiAttachmentLoader(.emoji(named: \.lastPathComponent))
+        .remodex.imageAttachmentLoader(.image(named: \.lastPathComponent))
+        .remodex.emojiAttachmentLoader(.emoji(named: \.lastPathComponent))
       }
     }
     .formStyle(.grouped)

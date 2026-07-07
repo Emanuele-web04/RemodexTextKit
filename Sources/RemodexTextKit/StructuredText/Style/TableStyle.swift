@@ -20,7 +20,7 @@ extension StructuredText {
 
   /// A style that controls how `StructuredText` renders tables.
   ///
-  /// You can apply a table style using the ``TextualNamespace/tableStyle(_:)`` modifier
+  /// You can apply a table style using the ``RemodexNamespace/tableStyle(_:)`` modifier
   /// or through a bundled ``StructuredText/Style``.
   public protocol TableStyle: DynamicProperty {
     associatedtype Body: View

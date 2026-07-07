@@ -3,7 +3,7 @@ import SwiftUI
 /// Customizes the appearance of inline elements in ``InlineText`` and ``StructuredText``.
 ///
 /// Use `InlineStyle` to control how inline formatting (code, emphasis, links, strong, and
-/// strikethrough) is rendered. Apply a custom style using the ``TextualNamespace/inlineStyle(_:)`` modifier.
+/// strikethrough) is rendered. Apply a custom style using the ``RemodexNamespace/inlineStyle(_:)`` modifier.
 ///
 /// ```swift
 /// let style = InlineStyle()
@@ -12,7 +12,7 @@ import SwiftUI
 ///   .link(.foregroundColor(.blue))
 ///
 /// InlineText(markdown: "Use `git status` to check **uncommitted** changes")
-///   .textual.inlineStyle(style)
+///   .remodex.inlineStyle(style)
 /// ```
 ///
 /// Each inline element can be customized independently using ``TextProperty`` values.

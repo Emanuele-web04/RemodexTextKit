@@ -33,7 +33,7 @@ extension StructuredText {
 
   /// A style that controls how `StructuredText` lays out list items.
   ///
-  /// Apply a list item style with ``TextualNamespace/listItemStyle(_:)`` or through a bundled
+  /// Apply a list item style with ``RemodexNamespace/listItemStyle(_:)`` or through a bundled
   /// ``StructuredText/Style``.
   public protocol ListItemStyle: DynamicProperty {
     associatedtype Body: View

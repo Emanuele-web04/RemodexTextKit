@@ -166,7 +166,7 @@ extension StructuredText {
         chunk of randomly assembled molecules drifting wherever the universe blows you.
         """
       )
-      .textual.blockSpacing(.fontScaled(bottom: 1))
+      .remodex.blockSpacing(.fontScaled(bottom: 1))
       Text(
         """
         Listen, Morty, I hate to break it to you but what people call "love" is just a chemical \
@@ -175,14 +175,14 @@ extension StructuredText {
         Break the cycle, Morty. Rise above. Focus on science.
         """
       )
-      .textual.blockSpacing(.fontScaled(bottom: blockSpacing))
+      .remodex.blockSpacing(.fontScaled(bottom: blockSpacing))
       Text(
         """
         Wow, I really Cronenberged up the whole place, huh Morty? Just a bunch a Cronenbergs \
         walkin' around.
         """
       )
-      .textual.blockSpacing(.fontScaled(top: 1, bottom: 1))
+      .remodex.blockSpacing(.fontScaled(top: 1, bottom: 1))
     }
     .border(Color.red)
     Spacer()

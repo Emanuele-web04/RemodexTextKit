@@ -22,7 +22,7 @@ struct BlockQuoteDemo: View {
           markdown: content,
           syntaxExtensions: [.emoji(.mastoEmoji)]
         )
-        .textual.textSelection(.enabled)
+        .remodex.textSelection(.enabled)
       } header: {
         Text("Default Style")
         Text("Text Selection Enabled")

@@ -8,7 +8,7 @@ extension InlineStyle {
   ///
   /// ```swift
   /// InlineText(markdown: "Use `git status` to check **uncommitted** changes")
-  ///   .textual.inlineStyle(.gitHub)
+  ///   .remodex.inlineStyle(.gitHub)
   /// ```
   public static var gitHub: InlineStyle {
     InlineStyle()

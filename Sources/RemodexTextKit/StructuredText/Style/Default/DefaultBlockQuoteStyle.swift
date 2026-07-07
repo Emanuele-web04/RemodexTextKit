@@ -15,8 +15,8 @@ extension StructuredText {
     public func makeBody(configuration: Configuration) -> some View {
       configuration.label
         .frame(maxWidth: .infinity, alignment: .leading)
-        .textual.lineSpacing(.fontScaled(0.471))
-        .textual.padding(.fontScaled(0.941))
+        .remodex.lineSpacing(.fontScaled(0.471))
+        .remodex.padding(.fontScaled(0.941))
         .background {
           ZStack(alignment: .leading) {
             Rectangle()
@@ -51,5 +51,5 @@ extension StructuredText.BlockQuoteStyle where Self == StructuredText.DefaultBlo
       """
   )
   .padding()
-  .textual.textSelection(.enabled)
+  .remodex.textSelection(.enabled)
 }

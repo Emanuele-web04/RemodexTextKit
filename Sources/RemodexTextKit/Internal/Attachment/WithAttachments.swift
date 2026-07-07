@@ -6,7 +6,7 @@ import SwiftUI
 //
 // Markup parsing keeps some items as URL attributes:
 // - `run.imageURL` for images
-// - `run.textual.emojiURL` for custom emoji references emitted by pattern expansion
+// - `run.remodex.emojiURL` for custom emoji references emitted by pattern expansion
 //
 // This view asynchronously loads those URLs using the environment-provided attachment loaders and
 // writes the resolved attachments back into the attributed string as `RemodexTextKit.Attachment`
@@ -93,7 +93,7 @@ extension WithAttachments {
               )
               return (run.range, imageURL, attachment.map(AnyAttachment.init))
             }
-          } else if let emojiURL = run.textual.emojiURL {
+          } else if let emojiURL = run.remodex.emojiURL {
             group.addTask {
               let attachment = try? await emojiAttachmentLoader.attachment(
                 for: emojiURL,
@@ -137,12 +137,12 @@ extension WithAttachments {
         if let imageURL = run.imageURL {
           hasAttachmentURLRun = true
           if let attachment = attachmentsByURL[imageURL] {
-            result[run.range].textual.attachment = attachment
+            result[run.range].remodex.attachment = attachment
           }
-        } else if let emojiURL = run.textual.emojiURL {
+        } else if let emojiURL = run.remodex.emojiURL {
           hasAttachmentURLRun = true
           if let attachment = attachmentsByURL[emojiURL] {
-            result[run.range].textual.attachment = attachment
+            result[run.range].remodex.attachment = attachment
           }
         }
       }
@@ -157,7 +157,7 @@ extension WithAttachments {
       var attributedString = attributedString
 
       for (range, url, attachment) in attachments {
-        attributedString[range].textual.attachment = attachment
+        attributedString[range].remodex.attachment = attachment
         attachmentsByURL[url] = attachment
       }
 
@@ -172,7 +172,7 @@ extension WithAttachments {
       for run in attributedString.runs {
         if let imageURL = run.imageURL {
           urlsInString.insert(imageURL)
-        } else if let emojiURL = run.textual.emojiURL {
+        } else if let emojiURL = run.remodex.emojiURL {
           urlsInString.insert(emojiURL)
         }
       }

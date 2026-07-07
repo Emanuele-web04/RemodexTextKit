@@ -26,7 +26,7 @@ public struct AttributedStringMarkdownParser: MarkupParser {
     try processor.expand(
       AttributedString(
         markdown: input,
-        including: \.textual,
+        including: \.remodex,
         options: options,
         baseURL: baseURL
       )

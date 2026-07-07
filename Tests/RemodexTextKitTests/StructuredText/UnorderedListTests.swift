@@ -23,7 +23,7 @@
         )
         .background(Color.guide)
         .padding(.horizontal)
-        .textual.unorderedListMarker(.hierarchical(.disc, .circle, .square))
+        .remodex.unorderedListMarker(.hierarchical(.disc, .circle, .square))
 
         assertSnapshot(of: view, as: .image(layout: layout))
       }
@@ -41,7 +41,7 @@
         )
         .background(Color.guide)
         .padding(.horizontal)
-        .textual.unorderedListMarker(.dash)
+        .remodex.unorderedListMarker(.dash)
 
         assertSnapshot(of: view, as: .image(layout: layout))
       }

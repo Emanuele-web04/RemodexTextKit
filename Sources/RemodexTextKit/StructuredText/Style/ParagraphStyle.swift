@@ -3,7 +3,7 @@ import SwiftUI
 extension StructuredText {
   /// A style that controls how `StructuredText` renders paragraphs.
   ///
-  /// You can set a paragraph style using the ``TextualNamespace/paragraphStyle(_:)`` modifier
+  /// You can set a paragraph style using the ``RemodexNamespace/paragraphStyle(_:)`` modifier
   /// or through a bundled ``StructuredText/Style``.
   public protocol ParagraphStyle: DynamicProperty {
     associatedtype Body: View

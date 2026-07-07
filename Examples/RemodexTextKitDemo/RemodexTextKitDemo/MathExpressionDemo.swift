@@ -42,7 +42,7 @@ struct MathExpressionDemo: View {
             """,
           syntaxExtensions: [.emoji(.mastoEmoji), .math]
         )
-        .textual.textSelection(.enabled)
+        .remodex.textSelection(.enabled)
       }
     }
     .formStyle(.grouped)

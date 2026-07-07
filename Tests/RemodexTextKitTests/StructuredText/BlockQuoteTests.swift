@@ -76,7 +76,7 @@
         )
         .background(Color.guide)
         .padding(.horizontal)
-        .textual.blockQuoteStyle(IndentationLevelBlockQuoteStyle(colors: .green, .mint, .teal))
+        .remodex.blockQuoteStyle(IndentationLevelBlockQuoteStyle(colors: .green, .mint, .teal))
 
         assertSnapshot(of: view, as: .image(layout: layout))
       }

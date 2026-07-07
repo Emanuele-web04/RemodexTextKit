@@ -4,7 +4,7 @@ extension StructuredText {
   /// A collection of styles that control how `StructuredText` renders each block type.
   ///
   /// Use this protocol to bundle a consistent look (paragraphs, headings, lists, code blocks,
-  /// tables, and so on) and apply it using the ``TextualNamespace/structuredTextStyle(_:)``
+  /// tables, and so on) and apply it using the ``RemodexNamespace/structuredTextStyle(_:)``
   /// modifier.
   public protocol Style {
     associatedtype HeadingStyle: StructuredText.HeadingStyle

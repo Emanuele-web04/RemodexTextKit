@@ -10,9 +10,9 @@ extension StructuredText {
 
     public func makeBody(configuration: Configuration) -> some View {
       configuration.label
-        .textual.tableCellSpacing(horizontal: Self.borderWidth, vertical: Self.borderWidth)
-        .textual.blockSpacing(.init(top: 0, bottom: 16))
-        .textual.tableBackground { layout in
+        .remodex.tableCellSpacing(horizontal: Self.borderWidth, vertical: Self.borderWidth)
+        .remodex.blockSpacing(.init(top: 0, bottom: 16))
+        .remodex.tableBackground { layout in
           Canvas { context, _ in
             for bounds in layout.evenRowBounds {
               context.fill(
@@ -22,7 +22,7 @@ extension StructuredText {
             }
           }
         }
-        .textual.tableOverlay { layout in
+        .remodex.tableOverlay { layout in
           Canvas { context, _ in
             for divider in layout.dividers() {
               context.fill(
@@ -70,8 +70,8 @@ extension StructuredText.TableStyle where Self == StructuredText.GitHubTableStyl
       """
   )
   .padding()
-  .textual.inlineStyle(.gitHub)
-  .textual.paragraphStyle(.gitHub)
-  .textual.tableCellStyle(.gitHub)
-  .textual.tableStyle(.gitHub)
+  .remodex.inlineStyle(.gitHub)
+  .remodex.paragraphStyle(.gitHub)
+  .remodex.tableCellStyle(.gitHub)
+  .remodex.tableStyle(.gitHub)
 }

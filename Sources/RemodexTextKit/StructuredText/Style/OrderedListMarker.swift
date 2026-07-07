@@ -11,7 +11,7 @@ extension StructuredText {
 
   /// A marker view used for ordered list items.
   ///
-  /// Apply an ordered list marker with ``TextualNamespace/orderedListMarker(_:)`` or through a bundled
+  /// Apply an ordered list marker with ``RemodexNamespace/orderedListMarker(_:)`` or through a bundled
   /// ``StructuredText/Style``.
   public protocol OrderedListMarker: DynamicProperty {
     associatedtype Body: View
@@ -46,7 +46,7 @@ extension StructuredText {
     public func makeBody(configuration: Configuration) -> some View {
       Text("\(configuration.ordinal).")
         .monospacedDigit()
-        .textual.frame(minWidth: minWidth, alignment: .trailing)
+        .remodex.frame(minWidth: minWidth, alignment: .trailing)
     }
   }
 }
@@ -80,7 +80,7 @@ extension StructuredText {
 
     public func makeBody(configuration: Configuration) -> some View {
       Text("\(transform(configuration.ordinal)).")
-        .textual.frame(minWidth: minWidth, alignment: .trailing)
+        .remodex.frame(minWidth: minWidth, alignment: .trailing)
     }
   }
 }

@@ -59,7 +59,7 @@ struct TableDemo: View {
           markdown: content,
           syntaxExtensions: [.emoji(.mastoEmoji)]
         )
-        .textual.textSelection(.enabled)
+        .remodex.textSelection(.enabled)
       } header: {
         Text("Default Style")
         Text("Text Selection Enabled")
@@ -77,7 +77,7 @@ struct TableDemo: View {
         Text("Overflow Style")
         Text("Horizontal Scroll")
       }
-      .textual.tableStyle(.overflow(relativeWidth: relativeWidth))
+      .remodex.tableStyle(.overflow(relativeWidth: relativeWidth))
     }
     .formStyle(.grouped)
   }

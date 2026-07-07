@@ -92,7 +92,7 @@ import SwiftUI
 ///   .strong(.fontWeight(.bold))
 ///
 /// InlineText(markdown: "Use `git status` to check **uncommitted** changes")
-///   .textual.inlineStyle(style)
+///   .remodex.inlineStyle(style)
 /// ```
 public struct InlineText: View {
   @State private var attributedString = AttributedString()
@@ -168,5 +168,5 @@ extension InlineText {
     )
     .padding()
   }
-  .textual.textSelection(.enabled)
+  .remodex.textSelection(.enabled)
 }

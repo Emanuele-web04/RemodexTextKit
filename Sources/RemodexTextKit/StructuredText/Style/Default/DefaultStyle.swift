@@ -3,7 +3,7 @@ import SwiftUI
 extension StructuredText {
   /// The default set of styles for structured text.
   ///
-  /// Apply this style with ``TextualNamespace/structuredTextStyle(_:)``.
+  /// Apply this style with ``RemodexNamespace/structuredTextStyle(_:)``.
   public struct DefaultStyle: Style {
     public let inlineStyle: InlineStyle = .default
     public let headingStyle: DefaultHeadingStyle = .default

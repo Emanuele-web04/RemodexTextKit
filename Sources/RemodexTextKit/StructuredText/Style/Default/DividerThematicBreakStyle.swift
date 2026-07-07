@@ -10,7 +10,7 @@ extension StructuredText {
       Divider()
         .frame(minHeight: 1)
         .overlay(DynamicColor.grid)
-        .textual.blockSpacing(.fontScaled(top: 1.6, bottom: 1.6))
+        .remodex.blockSpacing(.fontScaled(top: 1.6, bottom: 1.6))
     }
   }
 }
@@ -35,5 +35,5 @@ extension StructuredText.ThematicBreakStyle where Self == StructuredText.Divider
       """
   )
   .padding()
-  .textual.textSelection(.enabled)
+  .remodex.textSelection(.enabled)
 }

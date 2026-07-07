@@ -19,7 +19,7 @@ struct InlineTextDemo: View {
               ![Random image](https://picsum.photos/seed/textual/400/250)
               """
           )
-          .textual.textSelection(.enabled)
+          .remodex.textSelection(.enabled)
         }
 
         VStack(alignment: .leading, spacing: 8) {
@@ -36,7 +36,7 @@ struct InlineTextDemo: View {
               """,
             syntaxExtensions: [.emoji(.mastoEmoji)]
           )
-          .textual.inlineStyle(
+          .remodex.inlineStyle(
             InlineStyle()
               .strong(.bold, .fontScale(1.3))
               .emphasis(.italic, .fontScale(0.85))
@@ -54,7 +54,7 @@ struct InlineTextDemo: View {
               and a bit of _extra emphasis_ just for style.
               """
           )
-          .textual.inlineStyle(.custom)
+          .remodex.inlineStyle(.custom)
         }
       }
       .frame(maxWidth: .infinity, alignment: .leading)

@@ -25,7 +25,7 @@ extension StructuredText {
 
   /// A style that controls how `StructuredText` renders code blocks.
   ///
-  /// Apply a code block style with ``TextualNamespace/codeBlockStyle(_:)`` or through a bundled
+  /// Apply a code block style with ``RemodexNamespace/codeBlockStyle(_:)`` or through a bundled
   /// ``StructuredText/Style``.
   public protocol CodeBlockStyle: DynamicProperty {
     associatedtype Body: View

@@ -57,7 +57,7 @@
         )
         .background(Color.guide)
         .padding(.horizontal)
-        .textual.orderedListMarker(.lowerRoman)
+        .remodex.orderedListMarker(.lowerRoman)
 
         assertSnapshot(of: view, as: .image(layout: layout))
       }
@@ -79,7 +79,7 @@
         )
         .background(Color.guide)
         .padding(.horizontal)
-        .textual.orderedListMarker(.upperRoman)
+        .remodex.orderedListMarker(.upperRoman)
 
         assertSnapshot(of: view, as: .image(layout: layout))
       }
@@ -101,7 +101,7 @@
         )
         .background(Color.guide)
         .padding(.horizontal)
-        .textual.orderedListMarker(.lowerAlpha)
+        .remodex.orderedListMarker(.lowerAlpha)
 
         assertSnapshot(of: view, as: .image(layout: layout))
       }
@@ -123,7 +123,7 @@
         )
         .background(Color.guide)
         .padding(.horizontal)
-        .textual.orderedListMarker(.upperAlpha)
+        .remodex.orderedListMarker(.upperAlpha)
 
         assertSnapshot(of: view, as: .image(layout: layout))
       }

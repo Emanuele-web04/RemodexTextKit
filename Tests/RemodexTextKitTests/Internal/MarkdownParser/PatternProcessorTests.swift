@@ -27,8 +27,8 @@ extension AttributedStringMarkdownParser {
       let doge = try #require(expected.range(of: "doge"))
       let sadDog = try #require(expected.range(of: "sad_dog"))
 
-      expected[doge].textual.emojiURL = Fixtures.dogeEmoji.url
-      expected[sadDog].textual.emojiURL = Fixtures.sadDogEmoji.url
+      expected[doge].remodex.emojiURL = Fixtures.dogeEmoji.url
+      expected[sadDog].remodex.emojiURL = Fixtures.sadDogEmoji.url
 
       // when
       let output = try processor.expand(input)
@@ -45,7 +45,7 @@ extension AttributedStringMarkdownParser {
       var expected = try AttributedString(markdown: "Hello `:doge:` and doge")
 
       let doge = try #require(expected.range(of: "doge", options: .backwards))
-      expected[doge].textual.emojiURL = Fixtures.dogeEmoji.url
+      expected[doge].remodex.emojiURL = Fixtures.dogeEmoji.url
 
       // when
       let output = try processor.expand(input)
@@ -76,7 +76,7 @@ extension AttributedStringMarkdownParser {
       )
 
       let doge = try #require(expected.range(of: "doge", options: .backwards))
-      expected[doge].textual.emojiURL = Fixtures.dogeEmoji.url
+      expected[doge].remodex.emojiURL = Fixtures.dogeEmoji.url
 
       // when
       let output = try processor.expand(input)
@@ -107,7 +107,7 @@ extension AttributedStringMarkdownParser {
       )
 
       let doge = try #require(expected.range(of: "doge", options: .backwards))
-      expected[doge].textual.emojiURL = Fixtures.dogeEmoji.url
+      expected[doge].remodex.emojiURL = Fixtures.dogeEmoji.url
 
       // when
       let output = try processor.expand(input)

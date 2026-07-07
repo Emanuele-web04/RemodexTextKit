@@ -10,9 +10,9 @@ extension StructuredText {
 
     public func makeBody(configuration: Configuration) -> some View {
       configuration.label
-        .textual.tableCellSpacing(horizontal: Self.borderWidth, vertical: Self.borderWidth)
-        .textual.blockSpacing(.fontScaled(top: 1.6, bottom: 1.6))
-        .textual.tableOverlay { layout in
+        .remodex.tableCellSpacing(horizontal: Self.borderWidth, vertical: Self.borderWidth)
+        .remodex.blockSpacing(.fontScaled(top: 1.6, bottom: 1.6))
+        .remodex.tableOverlay { layout in
           Canvas { context, _ in
             for divider in layout.dividers() {
               context.fill(
@@ -52,5 +52,5 @@ extension StructuredText.TableStyle where Self == StructuredText.DefaultTableSty
       """
   )
   .padding()
-  .textual.textSelection(.enabled)
+  .remodex.textSelection(.enabled)
 }

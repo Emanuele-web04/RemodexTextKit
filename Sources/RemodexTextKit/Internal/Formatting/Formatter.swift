@@ -25,7 +25,7 @@ final class Formatter {
     self.init(
       (try? AttributedString(
         nsAttributedString,
-        including: \.textual
+        including: \.remodex
       )) ?? .init()
     )
   }
@@ -340,7 +340,7 @@ extension Formatter.InlineNode {
 
     var node: Self
 
-    if let attachment = attributedString.textual.attachment {
+    if let attachment = attributedString.remodex.attachment {
       node = .attachment(attachment)
     } else if intent.contains(.lineBreak) {
       node = .lineBreak

@@ -13,7 +13,7 @@ import SwiftUI
 // local and non-scrollable regions.
 //
 // By default every `StructuredText` establishes its own coordinator, so coordination stops at the
-// view's boundary. `TextSelectionScope` (exposed as `.textual.textSelectionScope()`) injects a
+// view's boundary. `TextSelectionScope` (exposed as `.remodex.textSelectionScope()`) injects a
 // coordinator higher up the hierarchy; `TextSelectionCoordination` adopts an inherited coordinator
 // instead of creating one, which lets a container like a chat timeline keep at most one active
 // selection across many structured-text views.

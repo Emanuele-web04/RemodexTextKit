@@ -29,7 +29,7 @@ public enum OverflowState: Hashable {
 /// `Overflow` handles content that overflows horizontally. It can switch
 /// between wrapping and horizontal scrolling based on an environment value.
 ///
-/// You can set the mode using the ``TextualNamespace/overflowMode(_:)`` modifier. The default is
+/// You can set the mode using the ``RemodexNamespace/overflowMode(_:)`` modifier. The default is
 /// ``OverflowMode/scroll``.
 ///
 /// - Note: You should always use `Overflow` if your custom style needs horizontal scrolling.

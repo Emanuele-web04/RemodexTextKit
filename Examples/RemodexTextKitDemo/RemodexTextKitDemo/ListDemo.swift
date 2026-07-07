@@ -31,7 +31,7 @@ struct ListDemo: View {
         """,
       syntaxExtensions: [.emoji(.mastoEmoji)]
     )
-    .textual.textSelection(.enabled)
+    .remodex.textSelection(.enabled)
   }
 }
 

@@ -3,7 +3,7 @@ import SwiftUI
 extension StructuredText {
   /// A GitHub-like set of styles for structured text.
   ///
-  /// Apply this style with ``TextualNamespace/structuredTextStyle(_:)``.
+  /// Apply this style with ``RemodexNamespace/structuredTextStyle(_:)``.
   public struct GitHubStyle: Style {
     public let inlineStyle: InlineStyle = .gitHub
     public let headingStyle: GitHubHeadingStyle = .gitHub

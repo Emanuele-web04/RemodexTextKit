@@ -11,10 +11,10 @@ extension StructuredText {
       HStack(spacing: 0) {
         RoundedRectangle(cornerRadius: 6)
           .fill(DynamicColor.gitHubBorder)
-          .textual.frame(width: .fontScaled(0.2))
+          .remodex.frame(width: .fontScaled(0.2))
         configuration.label
           .foregroundStyle(DynamicColor.gitHubSecondary)
-          .textual.padding(.horizontal, .fontScaled(1))
+          .remodex.padding(.horizontal, .fontScaled(1))
       }
     }
   }
@@ -38,6 +38,6 @@ extension StructuredText.BlockQuoteStyle where Self == StructuredText.GitHubBloc
       """
   )
   .padding()
-  .textual.blockQuoteStyle(.gitHub)
-  .textual.paragraphStyle(.gitHub)
+  .remodex.blockQuoteStyle(.gitHub)
+  .remodex.paragraphStyle(.gitHub)
 }

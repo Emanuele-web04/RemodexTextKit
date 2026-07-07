@@ -17,11 +17,11 @@ extension AttributedStringProtocol {
   }
 
   func attachments() -> Set<AnyAttachment> {
-    uniqueValues(for: \.textual.attachment)
+    uniqueValues(for: \.remodex.attachment)
   }
 
   func hasAttachments() -> Bool {
-    containsValue(for: \.textual.attachment)
+    containsValue(for: \.remodex.attachment)
   }
 
   func containsValue<T>(for keyPath: KeyPath<AttributeContainer, T?>) -> Bool {
@@ -163,11 +163,11 @@ extension PresentationIntent {
 
 // MARK: - NSAttributedString
 
-extension NSAttributedString.Key: TextualCompatible {}
+extension NSAttributedString.Key: RemodexCompatible {}
 
-extension TextualNamespace where Base == NSAttributedString.Key {
+extension RemodexNamespace where Base == NSAttributedString.Key {
   static var attachment: Base {
-    .init(AttributeScopes.TextualAttributes.AttachmentAttribute.name)
+    .init(AttributeScopes.RemodexAttributes.AttachmentAttribute.name)
   }
 
   static var presentationIntent: Base {

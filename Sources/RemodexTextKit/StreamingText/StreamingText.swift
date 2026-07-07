@@ -92,14 +92,14 @@ public struct StreamingText: View {
   private var settledBody: some View {
     #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
       StructuredText(markup, parser: parser)
-        .textual.optimizedTextFragments(isSelectable: configuration.isSelectable)
+        .remodex.optimizedTextFragments(isSelectable: configuration.isSelectable)
     #elseif REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION && !os(tvOS) && !os(watchOS)
       if configuration.isSelectable {
         StructuredText(markup, parser: parser)
-          .textual.textSelection(.enabled)
+          .remodex.textSelection(.enabled)
       } else {
         StructuredText(markup, parser: parser)
-          .textual.textSelection(.disabled)
+          .remodex.textSelection(.disabled)
       }
     #else
       StructuredText(markup, parser: parser)

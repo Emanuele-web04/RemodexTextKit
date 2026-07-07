@@ -125,11 +125,11 @@
             let range = run.characterRanges.first
           else { continue }
 
-          result.addAttribute(.textual.attachment, value: attachment, range: NSRange(range))
+          result.addAttribute(.remodex.attachment, value: attachment, range: NSRange(range))
 
           if let presentationIntent = run.attachmentPresentationIntent {
             result.addAttribute(
-              .textual.presentationIntent, value: presentationIntent, range: NSRange(range))
+              .remodex.presentationIntent, value: presentationIntent, range: NSRange(range))
           }
         }
       }

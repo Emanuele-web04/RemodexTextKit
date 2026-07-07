@@ -13,8 +13,8 @@ import Foundation
 ///
 /// It also supports its own attributes for carrying resolved attachments and custom emoji URLs:
 ///
-/// ``Foundation/AttributeScopes/TextualAttributes/AttachmentAttribute`` and
-/// ``Foundation/AttributeScopes/TextualAttributes/EmojiURLAttribute``.
+/// ``Foundation/AttributeScopes/RemodexAttributes/AttachmentAttribute`` and
+/// ``Foundation/AttributeScopes/RemodexAttributes/EmojiURLAttribute``.
 ///
 /// RemodexTextKit ships with a Markdown parser out of the box: ``AttributedStringMarkdownParser``.
 ///

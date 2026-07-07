@@ -13,13 +13,13 @@ import SwiftUI
 /// struct CompactParagraphStyle: StructuredText.ParagraphStyle {
 ///   func makeBody(configuration: StructuredText.BlockStyleConfiguration) -> some View {
 ///     configuration.label
-///       .textual.lineSpacing(.fontScaled(0.2))
-///       .textual.blockSpacing(.fontScaled(top: 0.8))
+///       .remodex.lineSpacing(.fontScaled(0.2))
+///       .remodex.blockSpacing(.fontScaled(top: 0.8))
 ///   }
 /// }
 ///
 /// StructuredText(markdown: "Hello, world!")
-///   .textual.paragraphStyle(CompactParagraphStyle())
+///   .remodex.paragraphStyle(CompactParagraphStyle())
 /// ```
 public struct FontScaled<Value> where Value: FontScalable {
   /// The unscaled value.

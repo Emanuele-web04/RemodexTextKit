@@ -3,7 +3,7 @@ import SwiftUI
 extension StructuredText {
   /// A style that controls how `StructuredText` renders thematic breaks.
   ///
-  /// You can apply a thematic break style using the ``TextualNamespace/thematicBreakStyle(_:)`` modifier
+  /// You can apply a thematic break style using the ``RemodexNamespace/thematicBreakStyle(_:)`` modifier
   /// or through a bundled ``StructuredText/Style``.
   public protocol ThematicBreakStyle: DynamicProperty {
     associatedtype Body: View

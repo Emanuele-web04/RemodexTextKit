@@ -43,7 +43,7 @@
         .background(Color.guide)
         .padding(.horizontal)
         .multilineTextAlignment(.leading)
-        .textual.mathProperties(.init(textAlignment: .trailing))
+        .remodex.mathProperties(.init(textAlignment: .trailing))
 
         assertSnapshot(of: view, as: .image(layout: layout))
       }

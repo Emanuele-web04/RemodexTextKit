@@ -8,8 +8,8 @@ extension StructuredText {
 
     public func makeBody(configuration: Configuration) -> some View {
       configuration.label
-        .textual.lineSpacing(.fontScaled(0.25))
-        .textual.blockSpacing(.init(top: 0, bottom: 16))
+        .remodex.lineSpacing(.fontScaled(0.25))
+        .remodex.blockSpacing(.init(top: 0, bottom: 16))
     }
   }
 }
@@ -32,5 +32,5 @@ extension StructuredText.ParagraphStyle where Self == StructuredText.GitHubParag
       """
   )
   .padding()
-  .textual.paragraphStyle(.gitHub)
+  .remodex.paragraphStyle(.gitHub)
 }

@@ -63,7 +63,7 @@ extension StructuredText.ListItemStyle where Self == StructuredText.DefaultListI
       """
   )
   .padding()
-  .textual.textSelection(.enabled)
+  .remodex.textSelection(.enabled)
 }
 
 @available(tvOS, unavailable)
@@ -80,6 +80,6 @@ extension StructuredText.ListItemStyle where Self == StructuredText.DefaultListI
       """
   )
   .padding()
-  .textual.textSelection(.enabled)
-  .textual.unorderedListMarker(.hierarchical(.disc, .circle, .square))
+  .remodex.textSelection(.enabled)
+  .remodex.unorderedListMarker(.hierarchical(.disc, .circle, .square))
 }

@@ -11,7 +11,7 @@ extension StructuredText {
         .fontWeight(configuration.row == 0 ? .semibold : .regular)
         .padding(.vertical, 6)
         .padding(.horizontal, 13)
-        .textual.lineSpacing(.fontScaled(0.25))
+        .remodex.lineSpacing(.fontScaled(0.25))
     }
   }
 }

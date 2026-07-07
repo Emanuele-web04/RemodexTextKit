@@ -6,8 +6,8 @@ import SwiftUI
 /// into concrete ``Attachment`` values.
 ///
 /// The default loaders fetch and decode images using RemodexTextKit's built-in image loader. You can
-/// supply custom loaders using ``TextualNamespace/imageAttachmentLoader(_:)`` and
-/// ``TextualNamespace/emojiAttachmentLoader(_:)``.
+/// supply custom loaders using ``RemodexNamespace/imageAttachmentLoader(_:)`` and
+/// ``RemodexNamespace/emojiAttachmentLoader(_:)``.
 ///
 /// Here’s a common pattern when your markup uses relative image URLs:
 ///
@@ -21,7 +21,7 @@ import SwiftUI
 ///     ![](300/125)
 ///     """
 /// )
-/// .textual.imageAttachmentLoader(
+/// .remodex.imageAttachmentLoader(
 ///   .image(relativeTo: URL(string: "https://picsum.photos/seed/textual")!)
 /// )
 /// ```
@@ -37,8 +37,8 @@ import SwiftUI
 ///   markdown: "![Alt text](sad_dog) :sad_dog:",
 ///   syntaxExtensions: [.emoji(emoji)]
 /// )
-/// .textual.imageAttachmentLoader(.image(named: \.lastPathComponent))
-/// .textual.emojiAttachmentLoader(.emoji(named: \.lastPathComponent))
+/// .remodex.imageAttachmentLoader(.image(named: \.lastPathComponent))
+/// .remodex.emojiAttachmentLoader(.emoji(named: \.lastPathComponent))
 /// ```
 public protocol AttachmentLoader: Sendable {
   associatedtype Attachment: RemodexTextKit.Attachment

@@ -48,15 +48,15 @@
             StructuredText(markdown: Self.markdown(row: row))
           }
         }
-        .textual.textSelectionScope()
+        .remodex.textSelectionScope()
         .padding(.horizontal, 16)
       }
       // Wrap overflow mirrors chat-timeline usage: code blocks wrap instead of
       // hosting their own scrollable region (and local interaction view).
-      .textual.overflowMode(.wrap)
+      .remodex.overflowMode(.wrap)
 
       if selectable {
-        timeline.textual.textSelection(.enabled)
+        timeline.remodex.textSelection(.enabled)
       } else {
         timeline
       }

@@ -7,7 +7,7 @@ import SwiftUI
 ///
 /// Values are font-relative, so they scale with the current font size.
 ///
-/// You can set these properties using the ``TextualNamespace/emojiProperties(_:)`` modifier.
+/// You can set these properties using the ``RemodexNamespace/emojiProperties(_:)`` modifier.
 public struct EmojiProperties: Sendable, Hashable {
   /// The emoji size, expressed as a font-relative value.
   public var size: FontScaled<CGSize>

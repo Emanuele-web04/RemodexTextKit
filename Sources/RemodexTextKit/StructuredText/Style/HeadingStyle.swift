@@ -21,7 +21,7 @@ extension StructuredText {
 
   /// A style that controls how `StructuredText` renders headings.
   ///
-  /// Apply a heading style with ``TextualNamespace/headingStyle(_:)`` or through a bundled
+  /// Apply a heading style with ``RemodexNamespace/headingStyle(_:)`` or through a bundled
   /// ``StructuredText/Style``.
   public protocol HeadingStyle: DynamicProperty {
     associatedtype Body: View

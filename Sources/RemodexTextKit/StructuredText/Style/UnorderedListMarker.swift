@@ -9,7 +9,7 @@ extension StructuredText {
 
   /// A marker view used for unordered list items (for example, a bullet).
   ///
-  /// You can apply an unordered list marker using the ``TextualNamespace/unorderedListMarker(_:)`` modifier
+  /// You can apply an unordered list marker using the ``RemodexNamespace/unorderedListMarker(_:)`` modifier
   /// or through a bundled ``StructuredText/Style``.
   public protocol UnorderedListMarker: DynamicProperty {
     associatedtype Body: View
@@ -53,8 +53,8 @@ extension StructuredText {
 
     public func makeBody(configuration: Configuration) -> some View {
       SwiftUI.Image(systemName: symbolName)
-        .textual.fontScale(scale)
-        .textual.frame(minWidth: minWidth, alignment: .trailing)
+        .remodex.fontScale(scale)
+        .remodex.frame(minWidth: minWidth, alignment: .trailing)
     }
   }
 }
@@ -123,7 +123,7 @@ extension StructuredText {
 
     public func makeBody(configuration: Configuration) -> some View {
       Text("-")
-        .textual.frame(minWidth: minWidth, alignment: .trailing)
+        .remodex.frame(minWidth: minWidth, alignment: .trailing)
     }
   }
 }

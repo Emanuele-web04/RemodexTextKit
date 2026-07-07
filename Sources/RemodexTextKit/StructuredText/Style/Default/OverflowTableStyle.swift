@@ -3,7 +3,7 @@ import SwiftUI
 extension StructuredText {
   /// A table style that enables horizontal scrolling with a relative max width ratio.
   ///
-  /// Use ``TextualNamespace/overflowMode(_:)`` to switch between scrolling and wrapping.
+  /// Use ``RemodexNamespace/overflowMode(_:)`` to switch between scrolling and wrapping.
   public struct OverflowTableStyle: TableStyle {
     private static let borderWidth: CGFloat = 1
 
@@ -24,7 +24,7 @@ extension StructuredText {
         configuration.label
           .fixedSize(horizontal: false, vertical: true)
           .frame(maxWidth: maxWidth, alignment: .leading)
-          .textual.tableOverlay { layout in
+          .remodex.tableOverlay { layout in
             Canvas { context, _ in
               for divider in layout.dividers() {
                 context.fill(
@@ -36,8 +36,8 @@ extension StructuredText {
           }
           .padding(Self.borderWidth)
       }
-      .textual.tableCellSpacing(horizontal: Self.borderWidth, vertical: Self.borderWidth)
-      .textual.blockSpacing(.fontScaled(top: 1.6, bottom: 1.6))
+      .remodex.tableCellSpacing(horizontal: Self.borderWidth, vertical: Self.borderWidth)
+      .remodex.blockSpacing(.fontScaled(top: 1.6, bottom: 1.6))
     }
   }
 }
@@ -74,5 +74,5 @@ extension StructuredText.TableStyle where Self == StructuredText.OverflowTableSt
       """
   )
   .padding()
-  .textual.tableStyle(.overflow)
+  .remodex.tableStyle(.overflow)
 }

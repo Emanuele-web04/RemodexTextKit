@@ -70,7 +70,7 @@ extension Text {
       var runEnvironment = environment
       runEnvironment.font = run.font ?? environment.font
 
-      let key = run.textual.attachment.map {
+      let key = run.remodex.attachment.map {
         AttachmentKey(attachment: $0, font: runEnvironment.font)
       }
 
@@ -131,7 +131,7 @@ extension AttributedStringProtocol {
   ) -> [AttachmentKey: CGSize] {
     Dictionary(
       self.runs.compactMap { run in
-        guard let attachment = run.textual.attachment else {
+        guard let attachment = run.remodex.attachment else {
           return nil
         }
         var environment = environment

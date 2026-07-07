@@ -41,29 +41,29 @@ import SwiftUI
 ///
 /// ### Styling Structured Text
 ///
-/// You can apply a full style preset using the ``TextualNamespace/structuredTextStyle(_:)`` modifier.
+/// You can apply a full style preset using the ``RemodexNamespace/structuredTextStyle(_:)`` modifier.
 ///
 /// ```swift
 /// StructuredText(markdown: markdown)
-///   .textual.structuredTextStyle(.default)
+///   .remodex.structuredTextStyle(.default)
 /// ```
 ///
 /// For more control, you can customize individual block and inline styles. Inline styles
 /// apply to spans like emphasis and links. Block styles apply to structural elements:
 ///
-/// - ``TextualNamespace/headingStyle(_:)``, ``TextualNamespace/paragraphStyle(_:)``,
-///   ``TextualNamespace/blockQuoteStyle(_:)``, ``TextualNamespace/thematicBreakStyle(_:)``
-/// - ``TextualNamespace/listItemStyle(_:)``, ``TextualNamespace/unorderedListMarker(_:)``,
-///   ``TextualNamespace/orderedListMarker(_:)``
-/// - ``TextualNamespace/codeBlockStyle(_:)``, ``TextualNamespace/highlighterTheme(_:)``
-/// - ``TextualNamespace/tableStyle(_:)``, ``TextualNamespace/tableCellStyle(_:)``
+/// - ``RemodexNamespace/headingStyle(_:)``, ``RemodexNamespace/paragraphStyle(_:)``,
+///   ``RemodexNamespace/blockQuoteStyle(_:)``, ``RemodexNamespace/thematicBreakStyle(_:)``
+/// - ``RemodexNamespace/listItemStyle(_:)``, ``RemodexNamespace/unorderedListMarker(_:)``,
+///   ``RemodexNamespace/orderedListMarker(_:)``
+/// - ``RemodexNamespace/codeBlockStyle(_:)``, ``RemodexNamespace/highlighterTheme(_:)``
+/// - ``RemodexNamespace/tableStyle(_:)``, ``RemodexNamespace/tableCellStyle(_:)``
 ///
 /// Code blocks and tables may overflow horizontally. You can choose between scrolling and
-/// wrapping with ``TextualNamespace/overflowMode(_:)``.
+/// wrapping with ``RemodexNamespace/overflowMode(_:)``.
 ///
 /// ```swift
 /// StructuredText(markdown: markdown)
-///   .textual.overflowMode(.wrap)
+///   .remodex.overflowMode(.wrap)
 /// ```
 ///
 /// ### Interaction
@@ -71,7 +71,7 @@ import SwiftUI
 /// When the markup contains links, `StructuredText` uses SwiftUI’s `openURL` environment. Provide a
 /// custom `OpenURLAction` to intercept them (for example, to route in-app or to scroll to anchors).
 ///
-/// You can enable text selection with ``TextualNamespace/textSelection(_:)`` to let users select
+/// You can enable text selection with ``RemodexNamespace/textSelection(_:)`` to let users select
 /// text in a platform-appropriate way.
 ///
 /// ```swift
@@ -83,20 +83,20 @@ import SwiftUI
 ///       return .handled
 ///     }
 ///   )
-///   .textual.textSelection(.enabled)
+///   .remodex.textSelection(.enabled)
 /// ```
 ///
 /// ### Images, links, and relative URLs
 ///
 /// If your Markdown includes relative image URLs or links, provide a `baseURL`. To render images,
-/// configure an attachment loader using the ``TextualNamespace/imageAttachmentLoader(_:)``
+/// configure an attachment loader using the ``RemodexNamespace/imageAttachmentLoader(_:)``
 /// modifier.
 ///
 /// ```swift
 /// let baseURL = URL(string: "https://example.com/repo/")!
 ///
 /// StructuredText(markdown: readme, baseURL: baseURL)
-///   .textual.imageAttachmentLoader(.image(relativeTo: baseURL))
+///   .remodex.imageAttachmentLoader(.image(relativeTo: baseURL))
 /// ```
 ///
 /// When you need to parse something other than Markdown, use ``init(_:parser:)`` with a custom
@@ -203,7 +203,7 @@ extension StructuredText {
       }
     )
     .padding()
-    .textual.textSelection(.enabled)
+    .remodex.textSelection(.enabled)
 
     Spacer()
   }

@@ -12,9 +12,9 @@ extension StructuredText {
       WithFontScaledValue(.fontScaled(0.3)) { spacing in
         VStack(alignment: .leading, spacing: spacing) {
           makeLabel(configuration: configuration)
-            .textual.fontScale(fontScale)
-            .textual.lineSpacing(.fontScaled(0.125))
-            .textual.blockSpacing(.init(top: 24, bottom: 16))
+            .remodex.fontScale(fontScale)
+            .remodex.lineSpacing(.fontScaled(0.125))
+            .remodex.blockSpacing(.init(top: 24, bottom: 16))
             .fontWeight(.semibold)
           if headingLevel <= 2 {
             Divider()
@@ -64,6 +64,6 @@ extension StructuredText.HeadingStyle where Self == StructuredText.GitHubHeading
     )
     .padding()
   }
-  .textual.headingStyle(.gitHub)
-  .textual.paragraphStyle(.gitHub)
+  .remodex.headingStyle(.gitHub)
+  .remodex.paragraphStyle(.gitHub)
 }

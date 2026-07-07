@@ -22,7 +22,7 @@ extension StructuredText {
   ///
   /// - A wrap toggle that switches the block between horizontal scrolling and word wrapping.
   ///   This overrides the ambient ``OverflowMode`` set with
-  ///   ``TextualNamespace/overflowMode(_:)`` for the lifetime of the block.
+  ///   ``RemodexNamespace/overflowMode(_:)`` for the lifetime of the block.
   /// - A copy button that writes the block contents to the system pasteboard.
   public struct DefaultCodeBlockStyle: CodeBlockStyle {
     /// A code-block action icon.
@@ -164,8 +164,8 @@ private struct DefaultCodeBlockBody: View {
 
       Overflow {
         configuration.label
-          .textual.lineSpacing(.fontScaled(0.39))
-          .textual.fontScale(0.882)
+          .remodex.lineSpacing(.fontScaled(0.39))
+          .remodex.fontScale(0.882)
           .fixedSize(horizontal: false, vertical: true)
           .monospaced()
           .padding(.vertical, 10)
@@ -183,7 +183,7 @@ private struct DefaultCodeBlockBody: View {
         .stroke(DynamicColor.grid, lineWidth: 0.5)
     )
     .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous))
-    .textual.blockSpacing(.fontScaled(top: 0.88, bottom: 0))
+    .remodex.blockSpacing(.fontScaled(top: 0.88, bottom: 0))
   }
 }
 
@@ -434,8 +434,8 @@ private func triggerHaptic() {
     )
     .padding()
     .frame(maxWidth: .infinity, alignment: .topLeading)
-    .textual.textSelection(.enabled)
-    .textual.overflowMode(.wrap)
+    .remodex.textSelection(.enabled)
+    .remodex.overflowMode(.wrap)
   }
   .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 }

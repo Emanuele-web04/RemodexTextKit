@@ -6,7 +6,7 @@ extension StructuredText {
   /// A `HighlighterTheme` defines the base foreground and background colors for code blocks and
   /// an optional set of token-specific text properties.
   ///
-  /// You can set a highlighter theme using the ``TextualNamespace/highlighterTheme(_:)`` modifier.
+  /// You can set a highlighter theme using the ``RemodexNamespace/highlighterTheme(_:)`` modifier.
   public struct HighlighterTheme: Hashable, Sendable {
     let foregroundColor: DynamicColor
     let backgroundColor: DynamicColor

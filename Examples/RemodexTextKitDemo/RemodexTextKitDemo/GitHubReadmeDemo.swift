@@ -52,9 +52,9 @@ struct GitHubReadmeDemo: View {
             markdown: success.content,
             baseURL: success.baseURL
           )
-          .textual.imageAttachmentLoader(.image(relativeTo: success.imageBaseURL))
-          .textual.textSelection(.enabled)
-          .textual.overflowMode(self.wrapCode ? .wrap : .scroll)
+          .remodex.imageAttachmentLoader(.image(relativeTo: success.imageBaseURL))
+          .remodex.textSelection(.enabled)
+          .remodex.overflowMode(self.wrapCode ? .wrap : .scroll)
         case .failure:
           ContentUnavailableView {
             Label("Loading Failed", systemImage: "exclamationmark.triangle.fill")

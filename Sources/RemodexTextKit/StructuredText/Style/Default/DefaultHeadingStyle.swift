@@ -12,9 +12,9 @@ extension StructuredText {
       let fontScale = Self.fontScales[headingLevel - 1]
 
       configuration.label
-        .textual.fontScale(fontScale)
-        .textual.lineSpacing(.fontScaled(lineSpacing))
-        .textual.blockSpacing(.fontScaled(top: 1.6, bottom: 0.8))
+        .remodex.fontScale(fontScale)
+        .remodex.lineSpacing(.fontScaled(lineSpacing))
+        .remodex.blockSpacing(.fontScaled(top: 1.6, bottom: 0.8))
         .fontWeight(.semibold)
     }
   }
@@ -48,5 +48,5 @@ extension StructuredText.HeadingStyle where Self == StructuredText.DefaultHeadin
       """
   )
   .padding()
-  .textual.textSelection(.enabled)
+  .remodex.textSelection(.enabled)
 }

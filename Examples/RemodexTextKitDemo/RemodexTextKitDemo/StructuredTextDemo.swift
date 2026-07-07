@@ -100,8 +100,8 @@ struct StructuredTextDemo: View {
         markdown: content,
         syntaxExtensions: [.emoji(.mastoEmoji)]
       )
-      .textual.textSelection(.enabled)
-      .textual.overflowMode(self.wrapCode ? .wrap : .scroll)
+      .remodex.textSelection(.enabled)
+      .remodex.overflowMode(self.wrapCode ? .wrap : .scroll)
     }
     .formStyle(.grouped)
   }

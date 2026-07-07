@@ -8,9 +8,9 @@ extension StructuredText {
 
     public func makeBody(configuration _: Configuration) -> some View {
       Divider()
-        .textual.frame(height: .fontScaled(0.25))
+        .remodex.frame(height: .fontScaled(0.25))
         .overlay(DynamicColor.gitHubBorder)
-        .textual.blockSpacing(.init(top: 24, bottom: 24))
+        .remodex.blockSpacing(.init(top: 24, bottom: 24))
     }
   }
 }
@@ -33,6 +33,6 @@ extension StructuredText.ThematicBreakStyle where Self == StructuredText.GitHubT
       """
   )
   .padding()
-  .textual.paragraphStyle(.gitHub)
-  .textual.thematicBreakStyle(.gitHub)
+  .remodex.paragraphStyle(.gitHub)
+  .remodex.thematicBreakStyle(.gitHub)
 }
