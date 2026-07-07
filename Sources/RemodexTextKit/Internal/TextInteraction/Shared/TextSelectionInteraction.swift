@@ -24,8 +24,15 @@ struct TextSelectionInteraction: ViewModifier {
       if textSelection.allowsSelection {
         content
           .overlayTextLayoutCollection { layoutCollection in
+            // task(id:) instead of onChange: at mount, Text fragments publish their
+            // layouts across several layout passes within one frame, so the observed
+            // collection changes repeatedly and onChange trips SwiftUI's
+            // "tried to update multiple times per frame" runtime issue. task(id:)
+            // coalesces naturally - intermediate ids cancel, the model adopts only
+            // the settled collection, and the work runs after the frame commits.
+            // Stale queries in the gap are safe: the model clamps incoming positions.
             Color.clear
-              .onChange(of: AnyTextLayoutCollection(layoutCollection), initial: true) {
+              .task(id: AnyTextLayoutCollection(layoutCollection)) {
                 model.setCoordinator(coordinator)
                 model.setLayoutCollection(layoutCollection)
               }

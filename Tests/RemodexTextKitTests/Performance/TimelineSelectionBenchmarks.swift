@@ -100,6 +100,12 @@
 
       let selectable = mountAndSettle(selectable: true)
       XCTAssertEqual(interactionOverlayCount(in: selectable), Self.rowCount)
+
+      // The overlay must also have adopted a non-empty layout collection, proving the
+      // async task(id:) delivery path actually fed the selection model after mount.
+      let overlayTextInput = firstInteractionOverlay(in: selectable) as? (UIView & UITextInput)
+      XCTAssertNotNil(overlayTextInput)
+      XCTAssertTrue(overlayTextInput?.hasText == true)
       tearDown(selectable)
     }
 
