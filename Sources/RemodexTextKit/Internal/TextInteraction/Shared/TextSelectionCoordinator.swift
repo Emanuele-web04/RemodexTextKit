@@ -11,6 +11,12 @@ import SwiftUI
 // Each `TextSelectionModel` registers with a shared coordinator. When one model becomes selected,
 // the coordinator clears selection in the others, preventing multiple active selections across
 // local and non-scrollable regions.
+//
+// By default every `StructuredText` establishes its own coordinator, so coordination stops at the
+// view's boundary. `TextSelectionScope` (exposed as `.textual.textSelectionScope()`) injects a
+// coordinator higher up the hierarchy; `TextSelectionCoordination` adopts an inherited coordinator
+// instead of creating one, which lets a container like a chat timeline keep at most one active
+// selection across many structured-text views.
 
 #if REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION
   @Observable
@@ -39,6 +45,22 @@ import SwiftUI
 #endif
 
 struct TextSelectionCoordination: ViewModifier {
+  #if REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION
+    @Environment(TextSelectionCoordinator.self) private var inheritedCoordinator:
+      TextSelectionCoordinator?
+    @State private var coordinator = TextSelectionCoordinator()
+  #endif
+
+  func body(content: Content) -> some View {
+    #if REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION
+      content.environment(inheritedCoordinator ?? coordinator)
+    #else
+      content
+    #endif
+  }
+}
+
+struct TextSelectionScope: ViewModifier {
   #if REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION
     @State private var coordinator = TextSelectionCoordinator()
   #endif

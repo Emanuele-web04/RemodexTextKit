@@ -206,6 +206,23 @@ StructuredText(
 Scrollable regions like code blocks handle their own selection contexts. When you select text in a scrollable area,
 any document-level selection clears automatically, and vice versa.
 
+Each `StructuredText` coordinates selection only within itself. When you render many of them in one
+container — a chat timeline, for example — apply `textual.textSelectionScope()` to the container so
+starting a selection in one view clears the selection in the others, keeping at most one active
+selection across the whole subtree:
+
+```swift
+ScrollView {
+  VStack {
+    ForEach(messages) { message in
+      StructuredText(markdown: message.text)
+        .textual.textSelection(.enabled)
+    }
+  }
+  .textual.textSelectionScope()
+}
+```
+
 ### Styling
 
 RemodexTextKit provides a flexible styling system that lets you customize every aspect of structured text rendering. At the

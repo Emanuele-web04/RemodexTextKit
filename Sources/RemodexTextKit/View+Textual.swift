@@ -157,6 +157,31 @@ extension TextualNamespace where Base: View {
     #endif
   }
 
+  /// Shares a single text-selection scope across all structured-text views in this subtree.
+  ///
+  /// By default, each ``StructuredText`` coordinates selection only within itself, so views in a
+  /// list can each hold an active selection at the same time. Apply this modifier to a common
+  /// container (for example, a chat timeline) so starting a selection in one view clears the
+  /// selection in every other view in the scope, matching the platform's single-selection
+  /// behavior.
+  ///
+  /// ```swift
+  /// ScrollView {
+  ///   VStack {
+  ///     ForEach(messages) { message in
+  ///       StructuredText(markdown: message.text)
+  ///         .textual.textSelection(.enabled)
+  ///     }
+  ///   }
+  ///   .textual.textSelectionScope()
+  /// }
+  /// ```
+  @available(tvOS, unavailable)
+  @available(watchOS, unavailable)
+  @MainActor public func textSelectionScope() -> some View {
+    base.modifier(TextSelectionScope())
+  }
+
   /// Enables a lightweight UIKit-backed renderer for plain text fragments and code blocks.
   ///
   /// Use this for large, settled AI responses where native selection/copy and lower SwiftUI view
