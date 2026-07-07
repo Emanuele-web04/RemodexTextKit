@@ -28,10 +28,68 @@ struct WithAttachmentsTests {
     #expect(model.resolvedAttributedString == nil)
   }
 
-  private func attributedStringWithImage() -> AttributedString {
-    var attributedString = AttributedString("alt")
-    attributedString[attributedString.startIndex..<attributedString.endIndex].imageURL =
+  @Test func partiallyResolvedCarriesOverAlreadyResolvedAttachments() async {
+    let model = WithAttachments<EmptyView>.Model()
+    let loader = TestAttachmentLoader()
+
+    await model.resolveAttachments(
+      in: attributedStringWithImage(),
+      imageAttachmentLoader: loader,
+      emojiAttachmentLoader: loader,
+      environment: colorEnvironment
+    )
+
+    #expect(model.resolvedAttributedString?.hasAttachments() == true)
+
+    // A longer string that re-uses the same attachment URL (e.g. a streaming token append)
+    // should have its attachment carried over synchronously, before any async resolution.
+    var longerString = AttributedString("alt")
+    longerString[longerString.startIndex..<longerString.endIndex].imageURL =
       URL(string: "asset://image")!
+    longerString.append(AttributedString(" more text"))
+
+    let partiallyResolved = model.partiallyResolved(longerString)
+
+    #expect(partiallyResolved?.hasAttachments() == true)
+  }
+
+  @Test func staleResolutionDoesNotOverwriteNewerResult() async {
+    let model = WithAttachments<EmptyView>.Model()
+    let loader = DelayedAttachmentLoader()
+
+    let slowString = attributedString(text: "slow", url: URL(string: "asset://slow")!)
+    let fastString = attributedString(text: "fast", url: URL(string: "asset://fast")!)
+
+    async let slow: Void = model.resolveAttachments(
+      in: slowString,
+      imageAttachmentLoader: loader,
+      emojiAttachmentLoader: loader,
+      environment: colorEnvironment
+    )
+
+    // Let the first call's task group start (and suspend on the delayed load) before starting
+    // the second call.
+    await Task.yield()
+
+    await model.resolveAttachments(
+      in: fastString,
+      imageAttachmentLoader: loader,
+      emojiAttachmentLoader: loader,
+      environment: colorEnvironment
+    )
+
+    _ = await slow
+
+    #expect(model.resolvedAttributedString.map { String($0.characters) } == "fast")
+  }
+
+  private func attributedStringWithImage() -> AttributedString {
+    attributedString(text: "alt", url: URL(string: "asset://image")!)
+  }
+
+  private func attributedString(text: String, url: URL) -> AttributedString {
+    var attributedString = AttributedString(text)
+    attributedString[attributedString.startIndex..<attributedString.endIndex].imageURL = url
     return attributedString
   }
 
@@ -61,5 +119,18 @@ private struct TestAttachmentLoader: AttachmentLoader {
     environment _: ColorEnvironmentValues
   ) async throws -> TestAttachment {
     TestAttachment(id: "\(text):\(url.absoluteString)")
+  }
+}
+
+private struct DelayedAttachmentLoader: AttachmentLoader {
+  func attachment(
+    for url: URL,
+    text: String,
+    environment _: ColorEnvironmentValues
+  ) async throws -> TestAttachment {
+    if url.absoluteString.contains("slow") {
+      try? await Task.sleep(nanoseconds: 100_000_000)
+    }
+    return TestAttachment(id: "\(text):\(url.absoluteString)")
   }
 }
