@@ -36,14 +36,32 @@ actor ImageLoader {
         throw URLError(.dataLengthExceedsMaximum)
       }
 
+      let chunkSize = 64 * 1024
+
       var data = Data()
       data.reserveCapacity(
         min(Int(max(response.expectedContentLength, 0)), ImageLoader.maximumBodyBytes))
+
+      var buffer = [UInt8]()
+      buffer.reserveCapacity(chunkSize)
+
       for try await byte in bytes {
-        data.append(byte)
-        if data.count > ImageLoader.maximumBodyBytes {
-          throw URLError(.dataLengthExceedsMaximum)
+        buffer.append(byte)
+        if buffer.count == chunkSize {
+          data.append(contentsOf: buffer)
+          buffer.removeAll(keepingCapacity: true)
+          if data.count > ImageLoader.maximumBodyBytes {
+            throw URLError(.dataLengthExceedsMaximum)
+          }
         }
+      }
+
+      if !buffer.isEmpty {
+        data.append(contentsOf: buffer)
+      }
+
+      if data.count > ImageLoader.maximumBodyBytes {
+        throw URLError(.dataLengthExceedsMaximum)
       }
 
       return (data, response)
@@ -120,23 +138,36 @@ extension URLSessionConfiguration {
   }
 }
 
-/// A session delegate that refuses to follow redirects to non-HTTP(S) schemes.
+/// A session delegate that refuses to follow redirects to non-HTTP(S) schemes, and refuses to
+/// downgrade an `https` request to `http`.
 ///
 /// `URLAttachmentLoader` only permits `http`/`https` (or an explicitly opted-in scheme) before
 /// the initial request is made, but the server can still respond with a redirect to a `file:` or
-/// other local-resource URL. This delegate closes that gap by declining any redirect whose
-/// destination scheme isn't `http`/`https`; declining delivers the original response instead,
-/// which then fails the status-code check above.
-private final class RedirectPolicy: NSObject, URLSessionTaskDelegate, Sendable {
+/// other local-resource URL — or silently downgrade an `https` request to plaintext `http`. This
+/// delegate closes both gaps: it declines any redirect whose destination scheme isn't
+/// `http`/`https`, and it declines any redirect from an `https` original request to an `http`
+/// destination. Declining delivers the original response instead, which then fails the
+/// status-code check above.
+final class RedirectPolicy: NSObject, URLSessionTaskDelegate, Sendable {
   func urlSession(
     _ session: URLSession,
     task: URLSessionTask,
     willPerformHTTPRedirection response: HTTPURLResponse,
     newRequest request: URLRequest
   ) async -> URLRequest? {
-    guard let scheme = request.url?.scheme?.lowercased(),
-      scheme == "http" || scheme == "https"
-    else { return nil }
-    return request
+    Self.allowsRedirect(from: task.originalRequest?.url, to: request.url) ? request : nil
+  }
+
+  static func allowsRedirect(from originalURL: URL?, to destinationURL: URL?) -> Bool {
+    guard let destinationScheme = destinationURL?.scheme?.lowercased(),
+      destinationScheme == "http" || destinationScheme == "https"
+    else { return false }
+
+    let originalScheme = originalURL?.scheme?.lowercased()
+    if originalScheme == "https" {
+      return destinationScheme == "https"
+    }
+
+    return true
   }
 }

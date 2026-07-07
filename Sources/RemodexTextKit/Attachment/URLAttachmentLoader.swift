@@ -1,4 +1,5 @@
 import SwiftUI
+import os
 
 /// An attachment loader that fetches images from URLs.
 ///
@@ -11,6 +12,7 @@ public struct URLAttachmentLoader<Content: Attachment>: AttachmentLoader {
   private let baseURL: URL?
   private let allowedSchemes: Set<String>
   private let content: @Sendable (Image, String) -> Content
+  private let logger = Logger(category: .urlAttachmentLoader)
 
   fileprivate init(
     baseURL: URL?,
@@ -31,6 +33,7 @@ public struct URLAttachmentLoader<Content: Attachment>: AttachmentLoader {
 
     let scheme = imageURL.scheme?.lowercased() ?? ""
     guard allowedSchemes.contains(scheme) else {
+      logger.debug("Rejected attachment URL with disallowed scheme: \(scheme, privacy: .public)")
       throw URLError(.unsupportedURL)
     }
 
@@ -54,12 +57,11 @@ extension AttachmentLoader where Self == URLAttachmentLoader<ImageAttachment> {
     relativeTo baseURL: URL? = nil,
     allowedSchemes: Set<String> = ["http", "https"]
   ) -> Self {
-    var schemes = Set(allowedSchemes.map { $0.lowercased() })
-    if let baseScheme = baseURL?.scheme?.lowercased() {
-      schemes.insert(baseScheme)
-    }
-    return .init(
-      baseURL: baseURL, allowedSchemes: schemes, content: ImageAttachment.init(image:text:))
+    .init(
+      baseURL: baseURL,
+      allowedSchemes: resolvedAllowedSchemes(allowedSchemes, baseURL: baseURL),
+      content: ImageAttachment.init(image:text:)
+    )
   }
 }
 
@@ -77,11 +79,25 @@ extension AttachmentLoader where Self == URLAttachmentLoader<EmojiAttachment> {
     relativeTo baseURL: URL? = nil,
     allowedSchemes: Set<String> = ["http", "https"]
   ) -> Self {
-    var schemes = Set(allowedSchemes.map { $0.lowercased() })
-    if let baseScheme = baseURL?.scheme?.lowercased() {
-      schemes.insert(baseScheme)
-    }
-    return .init(
-      baseURL: baseURL, allowedSchemes: schemes, content: EmojiAttachment.init(image:text:))
+    .init(
+      baseURL: baseURL,
+      allowedSchemes: resolvedAllowedSchemes(allowedSchemes, baseURL: baseURL),
+      content: EmojiAttachment.init(image:text:)
+    )
   }
+}
+
+/// Normalizes a caller-supplied scheme allowlist: lowercases every entry and, if a base URL is
+/// supplied, includes its scheme too — supplying a `file:` base URL is an explicit signal that
+/// local loads are intended.
+private func resolvedAllowedSchemes(_ schemes: Set<String>, baseURL: URL?) -> Set<String> {
+  var resolved = Set(schemes.map { $0.lowercased() })
+  if let baseScheme = baseURL?.scheme?.lowercased() {
+    resolved.insert(baseScheme)
+  }
+  return resolved
+}
+
+extension Logger.RemodexTextKit.Category {
+  fileprivate static let urlAttachmentLoader = Self(rawValue: "urlAttachmentLoader")
 }
