@@ -1,7 +1,9 @@
-IOS_VERSION = 26.0
-TVOS_VERSION = 26.0
-WATCHOS_VERSION = 26.0
-VISIONOS_VERSION = 26.0
+# Default to the newest simulator runtime installed on this machine; override
+# with an env var (e.g. `IOS_VERSION=26.0 make test-ios`) to pin a specific version.
+IOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^iOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
+TVOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^tvOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
+WATCHOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^watchOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
+VISIONOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^visionOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
 
 PLATFORM_IOS = iOS Simulator,id=$(call udid_for,iOS $(IOS_VERSION),iPhone \d\+ Pro [^M])
 PLATFORM_MACOS = macOS
