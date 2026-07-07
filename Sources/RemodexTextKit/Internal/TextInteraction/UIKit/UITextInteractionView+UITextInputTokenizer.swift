@@ -42,8 +42,10 @@
         return range
       }
 
-      let rawStart = rangeBox.wrappedStart
-      let rawEnd = rangeBox.wrappedEnd
+      // Stale boxes from UIKit can reference a layout shape that no longer
+      // exists; clamp them into the current collection before intersecting.
+      let rawStart = model.clamped(rangeBox.wrappedStart)
+      let rawEnd = model.clamped(rangeBox.wrappedEnd)
       let rawPosition = positionBox.wrappedValue
 
       guard let blockRange = model.blockRange(for: rawPosition) else {
@@ -51,10 +53,8 @@
       }
 
       // Clamp the range to stay within the layout boundaries
-      let clampedRange = TextRange(
-        start: max(rawStart, blockRange.start),
-        end: min(rawEnd, blockRange.end)
-      )
+      let clampedRange = TextRange(from: rawStart, to: rawEnd)
+        .intersectionClamped(to: blockRange)
 
       return TextRangeBox(clampedRange)
     }

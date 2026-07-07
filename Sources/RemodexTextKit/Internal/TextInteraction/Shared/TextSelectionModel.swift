@@ -102,11 +102,11 @@
     // boxes across SwiftUI layout rebuilds and replays them after the collection
     // changed shape. Clamp them at this boundary so every traversal below operates
     // on paths that resolve in the current collection.
-    private func clamped(_ position: TextPosition) -> TextPosition {
+    func clamped(_ position: TextPosition) -> TextPosition {
       layoutCollection.clamped(position)
     }
 
-    private func clamped(_ range: TextRange) -> TextRange {
+    func clamped(_ range: TextRange) -> TextRange {
       layoutCollection.clamped(range)
     }
 
