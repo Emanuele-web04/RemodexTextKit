@@ -53,7 +53,7 @@ jobs:
         run: make test
 
   build-demo:
-    name: Build TextualDemo
+    name: Build RemodexTextKitDemo
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4

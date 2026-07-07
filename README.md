@@ -84,7 +84,7 @@ InlineText(
   markdown: "Use `git status` to check _uncommitted changes_"
 )
 .font(.custom("Avenir Next", size: 18))
-.textual.inlineStyle(
+.remodex.inlineStyle(
   InlineStyle()
     .code(
       .monospaced,
@@ -149,7 +149,7 @@ render into the same UIKit fragment path:
 
 ```swift
 StructuredText(markdown: responseText)
-  .textual.optimizedTextFragments(isSelectable: true)
+  .remodex.optimizedTextFragments(isSelectable: true)
 ```
 
 ### The `MarkupParser` protocol
@@ -200,7 +200,7 @@ StructuredText(
     ...
     """
 )
-.textual.textSelection(.enabled)
+.remodex.textSelection(.enabled)
 ```
 
 Scrollable regions like code blocks handle their own selection contexts. When you select text in a scrollable area,
@@ -216,10 +216,10 @@ ScrollView {
   VStack {
     ForEach(messages) { message in
       StructuredText(markdown: message.text)
-        .textual.textSelection(.enabled)
+        .remodex.textSelection(.enabled)
     }
   }
-  .textual.textSelectionScope()
+  .remodex.textSelectionScope()
 }
 ```
 
@@ -241,7 +241,7 @@ StructuredText(
     ...
     """
 )
-.textual.structuredTextStyle(.default)
+.remodex.structuredTextStyle(.default)
 ```
 
 This single modifier configures the entire rendering stack: inline styles (code, emphasis, strong, links), block styles
@@ -253,11 +253,11 @@ You can override specific aspects of a style without rebuilding everything. Each
 
 ```swift
 StructuredText(markdown: content)
-  .textual.structuredTextStyle(.default)
-  .textual.headingStyle(
+  .remodex.structuredTextStyle(.default)
+  .remodex.headingStyle(
     CustomHeadingStyle()
   )
-  .textual.codeBlockStyle(
+  .remodex.codeBlockStyle(
     CustomCodeBlockStyle()
   )
 ```
@@ -274,15 +274,15 @@ struct CustomHeadingStyle: StructuredText.HeadingStyle {
     
     VStack(alignment: .leading, spacing: 0) {
       configuration.label
-        .textual.fontScale(fontScale)
+        .remodex.fontScale(fontScale)
         .fontWeight(.semibold)
 
       if headingLevel == 1 {
         Divider()
-          .textual.padding(.top, .fontScaled(0.25))
+          .remodex.padding(.top, .fontScaled(0.25))
       }
     }
-    .textual.blockSpacing(.fontScaled(top: 1.5, bottom: 0.5))
+    .remodex.blockSpacing(.fontScaled(top: 1.5, bottom: 0.5))
   }
 }
 ```
@@ -296,19 +296,19 @@ Notice the `.fontScaled()` values in the example above. RemodexTextKit's font-re
 scale harmoniously with text size:
 
 ```swift
-.textual.padding(.fontScaled(1.0))
-.textual.blockSpacing(.fontScaled(top: 0.8, bottom: 1.2))
+.remodex.padding(.fontScaled(1.0))
+.remodex.blockSpacing(.fontScaled(top: 0.8, bottom: 1.2))
 ```
 
 These measurements adapt automatically to the current font size, dynamic type settings, and accessibility preferences.
 A padding of `.fontScaled(0.5)` creates padding that is half of the current font size. As users adjust text size, your
 spacing scales proportionally.
 
-You may have noticed the `.textual` prefix on modifiers throughout these examples. RemodexTextKit organizes its view modifiers
+You may have noticed the `.remodex` prefix on modifiers throughout these examples. RemodexTextKit organizes its view modifiers
 under this namespace, making them easy to discover through autocomplete while avoiding potential naming conflicts with
-SwiftUI or other libraries. When you type `.textual`, you see only RemodexTextKit-specific capabilities.
+SwiftUI or other libraries. When you type `.remodex`, you see only RemodexTextKit-specific capabilities.
 
-Many modifiers in the `.textual` namespace accept font-relative measurements through `.fontScaled()` values. Beyond
+Many modifiers in the `.remodex` namespace accept font-relative measurements through `.fontScaled()` values. Beyond
 padding and spacing, you can use these measurements for frame sizes, insets, and any numeric value where scaling with
 text size makes sense.
 
@@ -346,7 +346,7 @@ struct CompactStyle: StructuredText.Style {
 
 // Then apply it:
 StructuredText(markdown: content)
-  .textual.structuredTextStyle(CompactStyle())
+  .remodex.structuredTextStyle(CompactStyle())
 ```
 
 The protocol requires implementations for all block types, list markers, and inline styles. This ensures visual
