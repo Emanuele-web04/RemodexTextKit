@@ -30,18 +30,31 @@ To add support for a new language:
 organized by category (web fundamentals, systems programming, scripting languages, etc.) for
 readability.
 
-3. Run the bundle script:
+3. Adding a new language (or bumping `PRISM_VERSION`) changes the set of files that need to be
+downloaded and pinned, so re-record the checksum manifest:
+```bash
+./Scripts/bundle-prism.sh --record
+```
+
+This downloads Prism core and every listed language definition from the Prism CDN, writes their
+SHA-256 hashes to `Scripts/prism-checksums.sha256`, and bundles everything into
+`Sources/RemodexTextKit/Internal/Highlighter/Prism/prism-bundle.js`. Recorded hashes are only as
+trustworthy as this run's network, so only use `--record` when you're intentionally changing what
+gets downloaded — commit the manifest and the bundle together.
+
+For routine regeneration (no language or version change), run the script without flags:
 ```bash
 ./Scripts/bundle-prism.sh
 ```
+This verifies each download against the committed manifest and fails hard — naming the offending
+file — on any checksum mismatch or missing/failed download. Nothing is written to the bundle
+unless every file downloads and verifies successfully.
 
-The script downloads Prism core and all listed language definitions from the Prism CDN, bundles
-them into a single JavaScript file, and places it in `Sources/RemodexTextKit/Internal/Highlighter/Prism/`.
-
-This step requires network access. Runtime highlighting also depends on `JavaScriptCore`; when
+Both modes require network access. Runtime highlighting also depends on `JavaScriptCore`; when
 it's not available, code blocks fall back to plain text.
 
 4. Verify the change by rendering a fenced code block using the new language hint, and confirm
 the output looks reasonable under the default theme.
 
-5. Commit the updated `prism-bundle.js` file with your changes.
+5. Commit the updated `prism-bundle.js` file together with `Scripts/prism-checksums.sha256` (if
+you re-recorded it) with your changes.
