@@ -48,6 +48,7 @@ When proposing an enhancement:
    - Ensure the demo app still builds and runs
 4. **Test your changes**:
    - Run the test suite and verify all tests pass
+   - For fast local iteration, `make test-quick` runs plain `swift test` (macOS only, no simulators); run the full `make test` matrix (or rely on CI) before opening a PR
    - Build and run the demo app in `Examples/RemodexTextKitDemo`
    - Test on multiple platforms (iOS, macOS, visionOS) if applicable
 5. **Commit your changes** with a descriptive commit message (see style guide below)

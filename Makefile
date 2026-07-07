@@ -13,6 +13,10 @@ default: test
 
 test: test-macos test-ios test-tvos test-watchos test-visionos
 
+test-quick:
+	@echo "Running fast macOS SwiftPM tests..."
+	swift test
+
 test-macos:
 	@echo "Testing macOS..."
 	xcodebuild test -scheme RemodexTextKit -destination platform="$(PLATFORM_MACOS)"
@@ -51,7 +55,7 @@ build-demo:
 	@echo "Building RemodexTextKit demo for macOS..."
 	xcodebuild build -workspace RemodexTextKit.xcworkspace -scheme RemodexTextKitDemo -destination platform="$(PLATFORM_MACOS)" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
 
-.PHONY: format test bundle-prism build-demo
+.PHONY: format test test-quick bundle-prism build-demo
 
 define udid_for
 $(shell xcrun simctl list devices available '$(1)' | grep '$(2)' | sort -r | head -1 | awk -F '[()]' '{ print $$(NF-3) }')
