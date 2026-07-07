@@ -177,7 +177,7 @@ extension StreamingText {
 }
 
 #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
-  private struct UIKitStreamingTextView: UIViewRepresentable {
+  struct UIKitStreamingTextView: UIViewRepresentable {
     let markup: String
     let appendedMarkup: String?
     let configuration: StreamingText.Configuration
@@ -382,7 +382,7 @@ extension StreamingText {
     }
   }
 
-  private final class StreamingUITextView: UITextView {
+  final class StreamingUITextView: UITextView {
     private var measurementCache = TextualTextMeasurementCache()
 
     override var intrinsicContentSize: CGSize {
