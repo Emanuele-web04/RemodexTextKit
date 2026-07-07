@@ -27,6 +27,7 @@ struct CodeToken: Hashable, Sendable {
     }
 
     private static let cacheLimit = 32
+    static let maximumCodeUTF8Bytes = 128 * 1024  // beyond this, fall back to plain text
 
     private let context: JSContext
     private let logger = Logger(category: .codeTokenizer)
@@ -57,10 +58,20 @@ struct CodeToken: Hashable, Sendable {
     }
 
     func tokenize(code: String, language: String) -> [CodeToken] {
+      guard code.utf8.count <= Self.maximumCodeUTF8Bytes else {
+        return [CodeToken(content: code, type: .plain)]
+      }
+
       let key = CacheKey(language: language, code: code)
       if let tokens = cachedTokens[key] {
         markRecentlyUsed(key)
         return tokens
+      }
+
+      // Calls queue on this shared actor; if the SwiftUI task that issued this
+      // call was already cancelled (content changed again), skip the JS work.
+      guard !Task.isCancelled else {
+        return [CodeToken(content: code, type: .plain)]
       }
 
       guard

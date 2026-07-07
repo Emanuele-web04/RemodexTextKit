@@ -107,6 +107,11 @@ extension HighlightedTextFragment {
         return
       }
 
+      // Debounce: content changing rapidly (streaming) cancels this task and
+      // re-fires; only content stable for the interval reaches the JS tokenizer.
+      try? await Task.sleep(nanoseconds: 120_000_000)
+      guard !Task.isCancelled, tokenizationKey == key else { return }
+
       let nextTokens = await tokenizer.tokenize(code: code, language: languageHint)
       guard !Task.isCancelled, tokenizationKey == key else { return }
 
