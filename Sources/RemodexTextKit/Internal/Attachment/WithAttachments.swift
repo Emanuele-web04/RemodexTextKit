@@ -115,14 +115,18 @@ extension WithAttachments {
         return
       }
 
-      guard !resolvedAttachments.isEmpty else {
-        return
+      if !resolvedAttachments.isEmpty {
+        resolveAttachmentsFinished(
+          attributedString: attributedString,
+          attachments: resolvedAttachments
+        )
+      } else {
+        // No new attachments resolved this pass (every fetch failed, or there were no
+        // attachment URLs left to resolve). Still prune the cache against the current content
+        // so URLs no longer present don't survive indefinitely — this only trims
+        // `attachmentsByURL`, it never touches `resolvedAttributedString`.
+        pruneAttachmentsByURL(against: attributedString)
       }
-
-      resolveAttachmentsFinished(
-        attributedString: attributedString,
-        attachments: resolvedAttachments
-      )
     }
 
     /// Synchronously applies any already-cached attachments (matched by URL) to `attributedString`,

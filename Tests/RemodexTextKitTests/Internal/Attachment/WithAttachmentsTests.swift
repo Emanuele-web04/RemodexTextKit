@@ -83,6 +83,41 @@ struct WithAttachmentsTests {
     #expect(model.resolvedAttributedString.map { String($0.characters) } == "fast")
   }
 
+  @Test func pruningRunsEvenWhenResolutionPassYieldsNoSuccesses() async {
+    let model = WithAttachments<EmptyView>.Model()
+    let successLoader = TestAttachmentLoader()
+    let failingLoader = FailingAttachmentLoader()
+
+    let cachedURL = URL(string: "asset://image")!
+    await model.resolveAttachments(
+      in: attributedString(text: "alt", url: cachedURL),
+      imageAttachmentLoader: successLoader,
+      emojiAttachmentLoader: successLoader,
+      environment: colorEnvironment
+    )
+
+    #expect(model.resolvedAttributedString?.hasAttachments() == true)
+
+    // A second resolve pass for unrelated content whose only URL always fails to load. Every
+    // fetch in this pass fails, so `resolvedAttachments` is empty and
+    // `resolveAttachmentsFinished` never runs — the cache must still be pruned against this
+    // content.
+    let otherURL = URL(string: "asset://other")!
+    await model.resolveAttachments(
+      in: attributedString(text: "other", url: otherURL),
+      imageAttachmentLoader: failingLoader,
+      emojiAttachmentLoader: failingLoader,
+      environment: colorEnvironment
+    )
+
+    // The cached URL is no longer present in any resolved content, so it should have been
+    // pruned. Proving this through the internal seam: re-presenting a string containing the
+    // originally cached URL should no longer synchronously carry over the attachment.
+    let partiallyResolved = model.partiallyResolved(attributedString(text: "alt", url: cachedURL))
+
+    #expect(partiallyResolved?.hasAttachments() == false)
+  }
+
   private func attributedStringWithImage() -> AttributedString {
     attributedString(text: "alt", url: URL(string: "asset://image")!)
   }
@@ -119,6 +154,18 @@ private struct TestAttachmentLoader: AttachmentLoader {
     environment _: ColorEnvironmentValues
   ) async throws -> TestAttachment {
     TestAttachment(id: "\(text):\(url.absoluteString)")
+  }
+}
+
+private struct FailingLoaderError: Error {}
+
+private struct FailingAttachmentLoader: AttachmentLoader {
+  func attachment(
+    for url: URL,
+    text: String,
+    environment _: ColorEnvironmentValues
+  ) async throws -> TestAttachment {
+    throw FailingLoaderError()
   }
 }
 
