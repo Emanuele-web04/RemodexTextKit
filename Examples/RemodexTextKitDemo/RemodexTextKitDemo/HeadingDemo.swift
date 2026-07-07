@@ -1,5 +1,5 @@
-import SwiftUI
 import RemodexTextKit
+import SwiftUI
 
 struct HeadingDemo: View {
   private let content = """

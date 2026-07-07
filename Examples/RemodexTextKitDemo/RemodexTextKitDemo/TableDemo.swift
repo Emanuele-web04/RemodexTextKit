@@ -1,5 +1,5 @@
-import SwiftUI
 import RemodexTextKit
+import SwiftUI
 
 struct TableDemo: View {
   @State private var relativeWidth: CGFloat = 2.1

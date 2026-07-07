@@ -181,7 +181,8 @@
           }
 
           if run.underlineStyle != nil {
-            piece.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+            piece.addAttribute(
+              .underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
           }
 
           if run.strikethroughStyle != nil {

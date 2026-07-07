@@ -1,5 +1,5 @@
-import SwiftUI
 import RemodexTextKit
+import SwiftUI
 
 struct InlineTextDemo: View {
   var body: some View {
