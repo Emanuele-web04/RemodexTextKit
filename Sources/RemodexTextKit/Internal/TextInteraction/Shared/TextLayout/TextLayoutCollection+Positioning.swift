@@ -2,6 +2,27 @@
   import SwiftUI
 
   extension TextLayoutCollection {
+    // UIKit retains `UITextPosition` boxes across SwiftUI layout rebuilds and can hand
+    // them back after the collection changed shape (fragments added/removed, lines
+    // rewrapped). Positions that no longer resolve are snapped to the document end
+    // instead of trapping on a subscript.
+    func contains(_ indexPath: IndexPath) -> Bool {
+      guard layouts.indices.contains(indexPath.layout) else { return false }
+      let lines = layouts[indexPath.layout].lines
+      guard lines.indices.contains(indexPath.line) else { return false }
+      let runs = lines[indexPath.line].runs
+      guard runs.indices.contains(indexPath.run) else { return false }
+      return runs[indexPath.run].slices.indices.contains(indexPath.runSlice)
+    }
+
+    func clamped(_ position: TextPosition) -> TextPosition {
+      contains(position.indexPath) ? position : endPosition
+    }
+
+    func clamped(_ range: TextRange) -> TextRange {
+      TextRange(from: clamped(range.start), to: clamped(range.end))
+    }
+
     var startPosition: TextPosition {
       TextPosition(
         indexPath: .init(runSlice: 0, run: 0, line: 0, layout: 0),
@@ -81,6 +102,9 @@
     }
 
     func localCharacterRange(at indexPath: IndexPath) -> Range<Int> {
+      // Last line of defense for stale index paths (including an emptied collection,
+      // where even the clamped end position cannot resolve).
+      guard contains(indexPath) else { return 0..<0 }
       let line = layouts[indexPath.layout].lines[indexPath.line]
       return line.runs[indexPath.run]
         .slices[indexPath.runSlice]
@@ -88,11 +112,16 @@
     }
 
     func layoutDirection(at indexPath: IndexPath) -> LayoutDirection {
+      guard contains(indexPath) else { return .localeBased() }
       let line = layouts[indexPath.layout].lines[indexPath.line]
       return line.runs[indexPath.run].layoutDirection
     }
 
     func position(at layoutIndex: Int, localCharacterIndex: Int) -> TextPosition? {
+      guard layouts.indices.contains(layoutIndex) else {
+        return nil
+      }
+
       guard localCharacterIndex > 0 else {
         return TextPosition(
           indexPath: .init(layout: layoutIndex),

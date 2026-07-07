@@ -98,8 +98,20 @@
       layoutCollection.endPosition
     }
 
+    // Positions and ranges arriving here can be stale: UIKit retains `UITextPosition`
+    // boxes across SwiftUI layout rebuilds and replays them after the collection
+    // changed shape. Clamp them at this boundary so every traversal below operates
+    // on paths that resolve in the current collection.
+    private func clamped(_ position: TextPosition) -> TextPosition {
+      layoutCollection.clamped(position)
+    }
+
+    private func clamped(_ range: TextRange) -> TextRange {
+      layoutCollection.clamped(range)
+    }
+
     func attributedText(in range: TextRange) -> NSAttributedString {
-      layoutCollection.attributedText(in: range)
+      layoutCollection.attributedText(in: clamped(range))
     }
 
     func text(in range: TextRange) -> String {
@@ -107,27 +119,28 @@
     }
 
     func position(from position: TextPosition, offset: Int) -> TextPosition? {
-      layoutCollection.position(from: position, offset: offset)
+      layoutCollection.position(from: clamped(position), offset: offset)
     }
 
     func offset(from: TextPosition, to: TextPosition) -> Int {
-      layoutCollection.characterIndex(at: to) - layoutCollection.characterIndex(at: from)
+      layoutCollection.characterIndex(at: clamped(to))
+        - layoutCollection.characterIndex(at: clamped(from))
     }
 
     func firstRect(for range: TextRange) -> CGRect {
-      layoutCollection.firstRect(for: range)
+      layoutCollection.firstRect(for: clamped(range))
     }
 
     func caretRect(for position: TextPosition) -> CGRect {
-      layoutCollection.caretRect(for: position)
+      layoutCollection.caretRect(for: clamped(position))
     }
 
     func selectionRects(for range: TextRange) -> [TextSelectionRect] {
-      layoutCollection.selectionRects(for: range)
+      layoutCollection.selectionRects(for: clamped(range))
     }
 
     func selectionRects(for range: TextRange, layout: Text.Layout) -> [TextSelectionRect] {
-      layoutCollection.selectionRects(for: range, layout: layout)
+      layoutCollection.selectionRects(for: clamped(range), layout: layout)
     }
 
     func closestPosition(to point: CGPoint) -> TextPosition? {
@@ -136,21 +149,22 @@
 
     func closestPosition(to point: CGPoint, within range: TextRange) -> TextPosition? {
       guard let position = closestPosition(to: point) else { return nil }
+      let range = clamped(range)
       if position <= range.start { return range.start }
       if position >= range.end { return range.end }
       return position
     }
 
     func isPositionAtBlockBoundary(_ position: TextPosition) -> Bool {
-      layoutCollection.isPositionAtBlockBoundary(position)
+      layoutCollection.isPositionAtBlockBoundary(clamped(position))
     }
 
     func positionAbove(_ position: TextPosition, anchor: TextPosition) -> TextPosition? {
-      layoutCollection.positionAbove(position, anchor: anchor)
+      layoutCollection.positionAbove(clamped(position), anchor: clamped(anchor))
     }
 
     func positionBelow(_ position: TextPosition, anchor: TextPosition) -> TextPosition? {
-      layoutCollection.positionBelow(position, anchor: anchor)
+      layoutCollection.positionBelow(clamped(position), anchor: clamped(anchor))
     }
 
     func characterRange(at point: CGPoint) -> TextRange? {
@@ -158,36 +172,36 @@
     }
 
     func blockStart(for position: TextPosition) -> TextPosition? {
-      layoutCollection.blockStart(for: position)
+      layoutCollection.blockStart(for: clamped(position))
     }
 
     func blockEnd(for position: TextPosition) -> TextPosition? {
-      layoutCollection.blockEnd(for: position)
+      layoutCollection.blockEnd(for: clamped(position))
     }
 
     func blockRange(for position: TextPosition) -> TextRange? {
-      layoutCollection.blockRange(for: position)
+      layoutCollection.blockRange(for: clamped(position))
     }
 
     @available(macOS 10.0, *)
     @available(iOS, unavailable)
     @available(visionOS, unavailable)
     func wordRange(for position: TextPosition) -> TextRange? {
-      layoutCollection.wordRange(for: position)
+      layoutCollection.wordRange(for: clamped(position))
     }
 
     @available(macOS 10.0, *)
     @available(iOS, unavailable)
     @available(visionOS, unavailable)
     func nextWord(from position: TextPosition) -> TextPosition? {
-      layoutCollection.nextWord(from: position)
+      layoutCollection.nextWord(from: clamped(position))
     }
 
     @available(macOS 10.0, *)
     @available(iOS, unavailable)
     @available(visionOS, unavailable)
     func previousWord(from position: TextPosition) -> TextPosition? {
-      layoutCollection.previousWord(from: position)
+      layoutCollection.previousWord(from: clamped(position))
     }
   }
 #endif
