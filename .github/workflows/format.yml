@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - '*'
 
 concurrency:
   group: format-${{ github.ref }}
@@ -12,6 +15,7 @@ concurrency:
 jobs:
   swift_format:
     name: swift-format
+    if: github.event_name == 'push'
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -25,3 +29,20 @@ jobs:
           branch: main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    name: swift-format lint
+    if: github.event_name == 'pull_request'
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26.0
+        run: sudo xcode-select -s /Applications/Xcode_26.0.app
+      - name: Lint
+        run: |
+          swift format lint \
+            --configuration .swift-format \
+            --strict \
+            --parallel \
+            --recursive \
+            ./Package.swift ./Sources ./Tests ./Examples
