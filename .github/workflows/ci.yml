@@ -35,8 +35,18 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Select Xcode 26.0
-        run: sudo xcode-select -s /Applications/Xcode_26.0.app
+      - name: Select newest Xcode
+        run: |
+          XCODE_APP=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_APP" ]; then
+            XCODE_APP=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          fi
+          if [ -z "$XCODE_APP" ]; then
+            echo "::error::No Xcode installation found under /Applications"; exit 1
+          fi
+          echo "Selected $XCODE_APP"
+          sudo xcode-select -s "$XCODE_APP"
+          xcodebuild -version
       - name: Skip macro validation
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
       - name: Run tests
@@ -47,8 +57,18 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Select Xcode 26.0
-        run: sudo xcode-select -s /Applications/Xcode_26.0.app
+      - name: Select newest Xcode
+        run: |
+          XCODE_APP=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_APP" ]; then
+            XCODE_APP=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          fi
+          if [ -z "$XCODE_APP" ]; then
+            echo "::error::No Xcode installation found under /Applications"; exit 1
+          fi
+          echo "Selected $XCODE_APP"
+          sudo xcode-select -s "$XCODE_APP"
+          xcodebuild -version
       - name: Skip macro validation
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
       - name: Build demo
@@ -60,7 +80,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Select Xcode 16.4
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+        run: |
+          if [ ! -d /Applications/Xcode_16.4.app ]; then
+            echo "::error::Xcode 16.4 not installed on this runner image"; exit 1
+          fi
+          sudo xcode-select -s /Applications/Xcode_16.4.app
       - name: Skip macro validation
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
       - name: Test macOS
