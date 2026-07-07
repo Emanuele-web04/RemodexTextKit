@@ -2,7 +2,7 @@ import SwiftUI
 
 extension AttributeScopes {
   /// Attributes used by RemodexTextKit when parsing and rendering markup.
-  public struct TextualAttributes: AttributeScope {
+  public struct RemodexAttributes: AttributeScope {
     /// Stores an attachment value in attributed content.
     public enum AttachmentAttribute: AttributedStringKey {
       public typealias Value = AnyAttachment
@@ -27,16 +27,26 @@ extension AttributeScopes {
     public let foundation: AttributeScopes.FoundationAttributes
   }
 
+  /// Deprecated alias for ``RemodexAttributes``.
+  @available(*, deprecated, renamed: "RemodexAttributes")
+  public typealias TextualAttributes = RemodexAttributes
+
   /// The RemodexTextKit attribute scope.
-  public var textual: TextualAttributes.Type {
-    TextualAttributes.self
+  public var remodex: RemodexAttributes.Type {
+    RemodexAttributes.self
+  }
+
+  /// Deprecated alias for ``remodex``.
+  @available(*, deprecated, renamed: "remodex")
+  public var textual: RemodexAttributes.Type {
+    remodex
   }
 }
 
 extension AttributeDynamicLookup {
   /// Provides dynamic member lookup for RemodexTextKit attributes.
   public subscript<T: AttributedStringKey>(
-    dynamicMember keyPath: KeyPath<AttributeScopes.TextualAttributes, T>
+    dynamicMember keyPath: KeyPath<AttributeScopes.RemodexAttributes, T>
   ) -> T {
     return self[T.self]
   }
