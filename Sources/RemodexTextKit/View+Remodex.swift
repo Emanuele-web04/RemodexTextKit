@@ -8,13 +8,17 @@ extension View {
   ///
   /// ```swift
   /// StructuredText(markdown: "Hello, **world**!")
-  ///   .textual.inlineStyle(.custom)
-  ///   .textual.textSelection(.enabled)
+  ///   .remodex.inlineStyle(.custom)
+  ///   .remodex.textSelection(.enabled)
   /// ```
-  @inlinable public var textual: TextualNamespace<Self> { .init(self) }
+  @inlinable public var remodex: RemodexNamespace<Self> { .init(self) }
+
+  /// Deprecated alias for ``remodex``.
+  @available(*, deprecated, renamed: "remodex")
+  @inlinable public var textual: RemodexNamespace<Self> { remodex }
 }
 
-extension TextualNamespace where Base: View {
+extension RemodexNamespace where Base: View {
   /// Sets the spacing above and below the current block.
   @MainActor public func blockSpacing(_ blockSpacing: StructuredText.BlockSpacing) -> some View {
     base.preference(key: StructuredText.BlockSpacingKey.self, value: blockSpacing)
@@ -170,10 +174,10 @@ extension TextualNamespace where Base: View {
   ///   VStack {
   ///     ForEach(messages) { message in
   ///       StructuredText(markdown: message.text)
-  ///         .textual.textSelection(.enabled)
+  ///         .remodex.textSelection(.enabled)
   ///     }
   ///   }
-  ///   .textual.textSelectionScope()
+  ///   .remodex.textSelectionScope()
   /// }
   /// ```
   @available(tvOS, unavailable)

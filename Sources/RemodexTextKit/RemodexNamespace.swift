@@ -38,6 +38,14 @@ extension RemodexCompatible {
 
   /// A `RemodexNamespace` wrapper around this instance.
   @inlinable public var remodex: RemodexNamespace<Self> { .init(self) }
+
+  /// Deprecated alias for ``remodex``.
+  @available(*, deprecated, renamed: "remodex")
+  @inlinable public static var textual: RemodexNamespace<Self>.Type { remodex }
+
+  /// Deprecated alias for ``remodex``.
+  @available(*, deprecated, renamed: "remodex")
+  @inlinable public var textual: RemodexNamespace<Self> { remodex }
 }
 
 /// Deprecated alias for ``RemodexNamespace``.
