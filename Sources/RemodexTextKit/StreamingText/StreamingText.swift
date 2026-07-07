@@ -256,13 +256,15 @@ extension StreamingText {
           return
         }
 
-        guard !StreamingTextAppendPolicy.shouldIgnoreUpdate(
-          hasScheduledUpdate: updateTask != nil,
-          pendingMarkup: pendingMarkup,
-          nextMarkup: markup,
-          configurationChanged: configuration != pendingConfiguration,
-          environmentChanged: environmentChanged
-        ) else {
+        guard
+          !StreamingTextAppendPolicy.shouldIgnoreUpdate(
+            hasScheduledUpdate: updateTask != nil,
+            pendingMarkup: pendingMarkup,
+            nextMarkup: markup,
+            configurationChanged: configuration != pendingConfiguration,
+            environmentChanged: environmentChanged
+          )
+        else {
           return
         }
 

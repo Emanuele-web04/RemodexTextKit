@@ -1,5 +1,5 @@
-import SwiftUI
 import RemodexTextKit
+import SwiftUI
 
 extension Set where Element == Emoji {
   static let mastoEmoji = Bundle.main.mastoEmoji()

@@ -17,7 +17,7 @@ let package = Package(
   dependencies: [
     .package(url: "https://github.com/pointfreeco/swift-concurrency-extras", from: "1.3.1"),
     .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.18.7"),
-    .package(url: "https://github.com/gonzalezreal/swiftui-math", from: "0.1.0"),
+    .package(url: "https://github.com/gonzalezreal/swiftui-math", .upToNextMinor(from: "0.1.0")),
   ],
   targets: [
     .target(
@@ -30,8 +30,10 @@ let package = Package(
         .process("Internal/Highlighter/Prism")
       ],
       swiftSettings: [
-        .define("REMODEX_TEXT_KIT_ENABLE_LINKS", .when(platforms: [.macOS, .iOS, .watchOS, .visionOS])),
-        .define("REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION", .when(platforms: [.macOS, .iOS, .visionOS])),
+        .define(
+          "REMODEX_TEXT_KIT_ENABLE_LINKS", .when(platforms: [.macOS, .iOS, .watchOS, .visionOS])),
+        .define(
+          "REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION", .when(platforms: [.macOS, .iOS, .visionOS])),
       ]
     ),
     .testTarget(
@@ -46,7 +48,8 @@ let package = Package(
       ],
       resources: [.copy("Fixtures")],
       swiftSettings: [
-        .define("REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION", .when(platforms: [.macOS, .iOS, .visionOS]))
+        .define(
+          "REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION", .when(platforms: [.macOS, .iOS, .visionOS]))
       ]
     ),
   ]

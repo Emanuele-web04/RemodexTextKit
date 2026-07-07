@@ -1,5 +1,5 @@
-import SwiftUI
 import RemodexTextKit
+import SwiftUI
 
 struct GitHubReadmeDemo: View {
   private let about = """

@@ -68,7 +68,8 @@
     // memory metrics instead.
     private func mountAndSettle(selectable: Bool) -> UIWindow {
       let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
-      window.rootViewController = UIHostingController(rootView: makeTimeline(selectable: selectable))
+      window.rootViewController = UIHostingController(
+        rootView: makeTimeline(selectable: selectable))
       window.makeKeyAndVisible()
       window.layoutIfNeeded()
       RunLoop.main.run(until: Date().addingTimeInterval(0.5))

@@ -5,8 +5,8 @@
 // Exports: StructuredText.DefaultCodeBlockStyle
 // Depends on: SwiftUI, Overflow, OverflowFrameKey, DynamicColor, StructuredText.CodeBlockProxy
 
-import SwiftUI
 import Foundation
+import SwiftUI
 
 #if canImport(UIKit)
   import UIKit

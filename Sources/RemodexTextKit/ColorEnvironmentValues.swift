@@ -7,14 +7,6 @@ public struct ColorEnvironmentValues: Hashable, Sendable {
 
   /// The current color scheme contrast.
   public var colorSchemeContrast: ColorSchemeContrast
-
-  init(
-    colorScheme: ColorScheme,
-    colorSchemeContrast: ColorSchemeContrast
-  ) {
-    self.colorScheme = colorScheme
-    self.colorSchemeContrast = colorSchemeContrast
-  }
 }
 
 extension EnvironmentValues {

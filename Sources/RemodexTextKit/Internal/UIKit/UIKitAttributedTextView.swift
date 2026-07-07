@@ -129,7 +129,7 @@
       @available(iOS, deprecated: 17.0, message: "Use UITextView text item delegate methods.")
       func textView(
         _: UITextView,
-        shouldInteractWith URL: URL,
+        shouldInteractWith url: URL,
         in _: NSRange,
         interaction _: UITextItemInteraction
       ) -> Bool {
@@ -137,7 +137,7 @@
           return true
         }
 
-        openURL(URL)
+        openURL(url)
         return false
       }
 
@@ -181,7 +181,8 @@
           }
 
           if run.underlineStyle != nil {
-            piece.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+            piece.addAttribute(
+              .underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
           }
 
           if run.strikethroughStyle != nil {

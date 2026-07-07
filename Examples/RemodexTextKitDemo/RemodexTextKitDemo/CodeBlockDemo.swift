@@ -1,5 +1,5 @@
-import SwiftUI
 import RemodexTextKit
+import SwiftUI
 
 struct CodeBlockDemo: View {
   @State private var wrapCode = false

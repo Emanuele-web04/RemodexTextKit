@@ -1,5 +1,5 @@
-import SwiftUI
 import RemodexTextKit
+import SwiftUI
 
 struct StructuredTextDemo: View {
   @State private var wrapCode = false

@@ -1,7 +1,9 @@
-IOS_VERSION = 26.0
-TVOS_VERSION = 26.0
-WATCHOS_VERSION = 26.0
-VISIONOS_VERSION = 26.0
+# Default to the newest simulator runtime installed on this machine; override
+# with an env var (e.g. `IOS_VERSION=26.0 make test-ios`) to pin a specific version.
+IOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^iOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
+TVOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^tvOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
+WATCHOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^watchOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
+VISIONOS_VERSION ?= $(shell xcrun simctl list runtimes available | grep -oE '^visionOS [0-9]+\.[0-9]+' | sort -V | tail -1 | cut -d' ' -f2)
 
 PLATFORM_IOS = iOS Simulator,id=$(call udid_for,iOS $(IOS_VERSION),iPhone \d\+ Pro [^M])
 PLATFORM_MACOS = macOS
@@ -12,6 +14,10 @@ PLATFORM_VISIONOS = visionOS Simulator,id=$(call udid_for,visionOS $(VISIONOS_VE
 default: test
 
 test: test-macos test-ios test-tvos test-watchos test-visionos
+
+test-quick:
+	@echo "Running fast macOS SwiftPM tests..."
+	swift test
 
 test-macos:
 	@echo "Testing macOS..."
@@ -35,6 +41,7 @@ test-visionos:
 
 format:
 	swift format \
+		--configuration .swift-format \
 		--ignore-unparsable-files \
 		--in-place \
 		--parallel \
@@ -51,7 +58,7 @@ build-demo:
 	@echo "Building RemodexTextKit demo for macOS..."
 	xcodebuild build -workspace RemodexTextKit.xcworkspace -scheme RemodexTextKitDemo -destination platform="$(PLATFORM_MACOS)" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
 
-.PHONY: format test bundle-prism build-demo
+.PHONY: format test test-quick bundle-prism build-demo
 
 define udid_for
 $(shell xcrun simctl list devices available '$(1)' | grep '$(2)' | sort -r | head -1 | awk -F '[()]' '{ print $$(NF-3) }')
