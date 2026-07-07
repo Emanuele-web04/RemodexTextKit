@@ -17,7 +17,7 @@
     ) -> (UIKitStreamingTextView.Coordinator, StreamingUITextView, StreamingText.Configuration) {
       let coordinator = UIKitStreamingTextView.Coordinator()
       let textView = StreamingUITextView()
-      textView.configureForTextualIntrinsicRendering()
+      textView.configureForRemodexIntrinsicRendering()
       let configuration = StreamingText.Configuration(
         isSelectable: true, updateInterval: updateInterval
       )

@@ -189,7 +189,7 @@ extension StreamingText {
 
     func makeUIView(context: Context) -> StreamingUITextView {
       let textView = StreamingUITextView()
-      textView.configureForTextualIntrinsicRendering()
+      textView.configureForRemodexIntrinsicRendering()
       context.coordinator.update(
         textView,
         markup: markup,
@@ -358,7 +358,7 @@ extension StreamingText {
       }
 
       private func editTextStorage(_ textView: StreamingUITextView, _ edits: () -> Void) {
-        textView.textualPreservingSelectedRange {
+        textView.remodexPreservingSelectedRange {
           textView.textStorage.beginEditing()
           edits()
           textView.textStorage.endEditing()
@@ -385,7 +385,7 @@ extension StreamingText {
   }
 
   final class StreamingUITextView: UITextView {
-    private var measurementCache = TextualTextMeasurementCache()
+    private var measurementCache = RemodexTextMeasurementCache()
 
     override var intrinsicContentSize: CGSize {
       guard bounds.width > 0 else {
@@ -397,7 +397,7 @@ extension StreamingText {
     }
 
     func measuredSize(fittingWidth width: CGFloat) -> CGSize {
-      let key = TextualTextMeasurementKey(
+      let key = RemodexTextMeasurementKey(
         width: width,
         wrapsText: true,
         textLength: textStorage.length,
@@ -412,7 +412,7 @@ extension StreamingText {
     // Tells both UIKit and SwiftUI layout bridges that textStorage grew without a SwiftUI state tick.
     func invalidateStreamingLayout() {
       measurementCache.invalidate()
-      invalidateTextualIntrinsicLayout(includingSuperview: true)
+      invalidateRemodexIntrinsicLayout(includingSuperview: true)
     }
   }
 #endif

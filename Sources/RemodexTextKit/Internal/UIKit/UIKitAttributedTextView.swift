@@ -27,7 +27,7 @@
 
     func makeUIView(context: Context) -> MeasuringTextView {
       let textView = MeasuringTextView()
-      textView.configureForTextualIntrinsicRendering()
+      textView.configureForRemodexIntrinsicRendering()
       textView.delegate = context.coordinator
       updateUIView(textView, context: context)
       return textView
@@ -107,7 +107,7 @@
           return
         }
 
-        textView.textualPreservingSelectedRange {
+        textView.remodexPreservingSelectedRange {
           textView.attributedText = Self.resolvedAttributedString(
             from: attributedString,
             environment: environment,
@@ -235,7 +235,7 @@
     }
 
     final class MeasuringTextView: UITextView {
-      private var measurementCache = TextualTextMeasurementCache()
+      private var measurementCache = RemodexTextMeasurementCache()
 
       override var intrinsicContentSize: CGSize {
         guard bounds.width > 0 else {
@@ -250,14 +250,14 @@
       }
 
       func measuredSize(constrainedTo width: CGFloat?, wrapsText: Bool) -> CGSize {
-        let key = TextualTextMeasurementKey(
+        let key = RemodexTextMeasurementKey(
           width: width,
           wrapsText: wrapsText,
           textLength: attributedText.length
         )
 
         return measurementCache.size(for: key) {
-          attributedText.textualBoundingSize(
+          attributedText.remodexBoundingSize(
             constrainedTo: width,
             wrapsText: wrapsText
           )
@@ -266,13 +266,13 @@
 
       func invalidateMeasuredSize() {
         measurementCache.invalidate()
-        invalidateTextualIntrinsicLayout()
+        invalidateRemodexIntrinsicLayout()
       }
     }
   }
 
   extension NSAttributedString {
-    func textualBoundingSize(constrainedTo width: CGFloat?, wrapsText: Bool) -> CGSize {
+    func remodexBoundingSize(constrainedTo width: CGFloat?, wrapsText: Bool) -> CGSize {
       guard length > 0 else {
         return .zero
       }

@@ -1,13 +1,13 @@
 // FILE: UIKitTextViewHelpers.swift
 // Purpose: Shared UIKit text-view primitives for RemodexTextKit renderers.
 // Layer: Internal UIKit Rendering
-// Exports: TextualTextMeasurementCache, UITextView rendering helpers
+// Exports: RemodexTextMeasurementCache, UITextView rendering helpers
 // Depends on: UIKit
 
 #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
   import UIKit
 
-  struct TextualTextMeasurementKey: Equatable {
+  struct RemodexTextMeasurementKey: Equatable {
     let width: CGFloat?
     let wrapsText: Bool
     let textLength: Int
@@ -26,12 +26,12 @@
     }
   }
 
-  struct TextualTextMeasurementCache {
-    private var key: TextualTextMeasurementKey?
+  struct RemodexTextMeasurementCache {
+    private var key: RemodexTextMeasurementKey?
     private var measuredSize: CGSize?
 
     mutating func size(
-      for key: TextualTextMeasurementKey,
+      for key: RemodexTextMeasurementKey,
       measure: () -> CGSize
     ) -> CGSize {
       if self.key == key, let measuredSize {
@@ -52,7 +52,7 @@
 
   extension UITextView {
     // Applies the common non-scrolling, intrinsic-height setup used by RemodexTextKit renderers.
-    func configureForTextualIntrinsicRendering() {
+    func configureForRemodexIntrinsicRendering() {
       backgroundColor = .clear
       isEditable = false
       isScrollEnabled = false
@@ -64,7 +64,7 @@
     }
 
     // Preserves copy/selection state while replacing or mutating backing text storage.
-    func textualPreservingSelectedRange(_ updates: () -> Void) {
+    func remodexPreservingSelectedRange(_ updates: () -> Void) {
       let selectedRange = selectedRange
       let hadSelection = selectedRange.location != NSNotFound
 
@@ -80,7 +80,7 @@
     }
 
     // Invalidates SwiftUI/UIKit layout after direct text-storage changes.
-    func invalidateTextualIntrinsicLayout(includingSuperview: Bool = false) {
+    func invalidateRemodexIntrinsicLayout(includingSuperview: Bool = false) {
       invalidateIntrinsicContentSize()
 
       guard includingSuperview else {
