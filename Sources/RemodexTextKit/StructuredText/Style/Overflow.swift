@@ -38,6 +38,8 @@ public struct Overflow<Content: View>: View {
   @Environment(\.overflowMode) private var mode
   @State private var containerWidth: CGFloat?
   @State private var contentHeight: CGFloat?
+  @State private var containerWidthUpdates = DeferredUpdateCoalescer<CGFloat>()
+  @State private var contentHeightUpdates = DeferredUpdateCoalescer<CGFloat>()
 
   private let content: (OverflowState) -> Content
 
@@ -67,7 +69,12 @@ public struct Overflow<Content: View>: View {
             .frame(minHeight: contentHeight)
           content(.scroll(containerWidth: containerWidth))
             .onGeometryChange(for: CGFloat.self, of: \.size.height) {
-              contentHeight = $0
+              contentHeightUpdates.submit($0) { height in
+                guard height.isFinite, contentHeight != height else {
+                  return
+                }
+                contentHeight = height
+              }
             }
             // Make text selection local in scrollable regions
             .modifier(TextSelectionInteraction())
@@ -77,7 +84,16 @@ public struct Overflow<Content: View>: View {
         }
       }
       .onScrollGeometryChange(for: CGFloat.self, of: \.containerSize.width) {
-        containerWidth = $1
+        containerWidthUpdates.submit($1) { width in
+          guard width.isFinite, containerWidth != width else {
+            return
+          }
+          containerWidth = width
+        }
+      }
+      .onDisappear {
+        containerWidthUpdates.cancel()
+        contentHeightUpdates.cancel()
       }
       // Propagate gesture exclusion area
       .background(
