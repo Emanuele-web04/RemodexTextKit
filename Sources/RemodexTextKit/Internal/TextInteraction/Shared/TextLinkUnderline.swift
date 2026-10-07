@@ -15,12 +15,19 @@ struct TextLinkUnderline: ViewModifier {
       content
         .backgroundPreferenceValue(Text.LayoutKey.self) { value in
           GeometryReader { geometry in
+            // The dots sit below the last line's descent, outside the text's frame, so the
+            // canvas hangs past the bottom edge instead of clipping them.
             Canvas { context, _ in
               for anchoredLayout in value {
                 let origin = geometry[anchoredLayout.origin]
                 draw(linkUnderline, in: anchoredLayout.layout, origin: origin, context: &context)
               }
             }
+            .frame(
+              width: geometry.size.width,
+              height: geometry.size.height + linkUnderline.offset + linkUnderline.dotDiameter,
+              alignment: .top
+            )
             .foregroundStyle(linkUnderline.color.map(AnyShapeStyle.init) ?? AnyShapeStyle(.tint))
           }
           .allowsHitTesting(false)
