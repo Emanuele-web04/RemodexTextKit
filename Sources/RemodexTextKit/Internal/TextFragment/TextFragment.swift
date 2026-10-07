@@ -73,6 +73,7 @@ struct TextFragment<Content: AttributedStringProtocol>: View {
       .modifier(TextSelectionBackground())
       .modifier(AttachmentOverlay(attachments: content.attachments()))
       .modifier(TextLinkInteraction())
+      .modifier(TextLinkUnderline())
   }
 
   private var usesUIKitTextFragment: Bool {

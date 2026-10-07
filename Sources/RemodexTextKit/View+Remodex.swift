@@ -224,6 +224,14 @@ extension RemodexNamespace where Base: View {
     base.environment(\.overflowMode, overflowMode)
   }
 
+  /// Draws a custom dotted underline under links in ``InlineText`` and ``StructuredText``.
+  ///
+  /// Pass `nil` to draw none. See ``LinkUnderline``.
+  @inlinable
+  public func linkUnderline(_ underline: LinkUnderline?) -> some View {
+    base.environment(\.linkUnderline, underline)
+  }
+
   /// Sets the inline style used by ``InlineText`` and ``StructuredText``.
   @inlinable
   public func inlineStyle(_ style: InlineStyle) -> some View {
