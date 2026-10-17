@@ -11,6 +11,8 @@
   // `TextSelectionModel` to translate touch locations into URLs and selection ranges, and it
   // respects `exclusionRects` so embedded scrollable regions can continue to handle gestures.
   // Selection UI is provided by `UITextInteraction` configured for non-editable content.
+  // While text is selected, a tap anywhere off the selection clears it, including elsewhere
+  // in the same text, which `UITextInteraction` leaves selected for non-editable content.
 
   final class UITextInteractionView: UIView {
     override var canBecomeFirstResponder: Bool {
@@ -27,6 +29,13 @@
 
     private(set) lazy var _tokenizer = UITextInputStringTokenizer(textInput: self)
     private let selectionInteraction: UITextInteraction
+    private lazy var outsideTapGesture: UITapGestureRecognizer = {
+      let gesture = UITapGestureRecognizer(target: self, action: #selector(handleOutsideTap(_:)))
+      // Observe only: the tapped control or scroll view still gets the touch.
+      gesture.cancelsTouchesInView = false
+      gesture.delegate = self
+      return gesture
+    }()
 
     init(
       model: TextSelectionModel,
@@ -92,6 +101,7 @@
       model.selectionDidChange = { [weak self] in
         guard let self else { return }
         self.inputDelegate?.selectionDidChange(self)
+        self.updateOutsideTapGesture()
       }
 
       let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
@@ -102,9 +112,41 @@
 
       for gesture in selectionInteraction.gesturesForFailureRequirements {
         tapGesture.require(toFail: gesture)
+        // A double tap selects a word; its first tap must not clear the result.
+        outsideTapGesture.require(toFail: gesture)
       }
 
       addInteraction(selectionInteraction)
+    }
+
+    override func didMoveToWindow() {
+      super.didMoveToWindow()
+      updateOutsideTapGesture()
+    }
+
+    // The window-level recognizer exists only while there is a selection to clear.
+    private func updateOutsideTapGesture() {
+      let hasSelection = !(model.selectedRange?.isCollapsed ?? true)
+      let targetView: UIView? = hasSelection ? window : nil
+      guard outsideTapGesture.view !== targetView else {
+        return
+      }
+      outsideTapGesture.view?.removeGestureRecognizer(outsideTapGesture)
+      targetView?.addGestureRecognizer(outsideTapGesture)
+    }
+
+    @objc private func handleOutsideTap(_ gesture: UITapGestureRecognizer) {
+      // Deferred so an edit-menu action from the same tap (Copy, Share) still
+      // reads the selection before it is cleared.
+      DispatchQueue.main.async { [weak self] in
+        guard let self, self.model.selectedRange != nil else {
+          return
+        }
+        self.model.selectedRange = nil
+        if self.isFirstResponder {
+          _ = self.resignFirstResponder()
+        }
+      }
     }
 
     @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
@@ -157,6 +199,38 @@
 
     func interactionDidEnd(_ interaction: UITextInteraction) {
       logger.debug("interactionDidEnd")
+    }
+  }
+
+  extension UITextInteractionView: UIGestureRecognizerDelegate {
+    private static let selectionHitSlop: CGFloat = 12
+
+    func gestureRecognizer(
+      _ gestureRecognizer: UIGestureRecognizer,
+      shouldReceive touch: UITouch
+    ) -> Bool {
+      guard gestureRecognizer === outsideTapGesture else {
+        return true
+      }
+      // Taps on the selection itself toggle the edit menu.
+      return !isOnSelection(touch.location(in: self))
+    }
+
+    private func isOnSelection(_ point: CGPoint) -> Bool {
+      guard let selectedRange = model.selectedRange else {
+        return false
+      }
+      return model.selectionRects(for: selectedRange).contains {
+        // Include the selection handles drawn just outside the text.
+        $0.rect.insetBy(dx: -Self.selectionHitSlop, dy: -Self.selectionHitSlop).contains(point)
+      }
+    }
+
+    func gestureRecognizer(
+      _ gestureRecognizer: UIGestureRecognizer,
+      shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+      gestureRecognizer === outsideTapGesture
     }
   }
 
