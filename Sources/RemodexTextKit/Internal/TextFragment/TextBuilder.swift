@@ -64,6 +64,15 @@ extension Text {
     attachmentSizes: [AttachmentKey: CGSize],
     in environment: TextEnvironmentValues
   ) {
+    // Syntax highlighting can produce hundreds of runs without attachments or links.
+    // SwiftUI renders their attributes directly; splitting them into concatenated Text
+    // nodes only adds retained layout work. Links keep the custom hit-testing metadata.
+    if attachmentSizes.isEmpty, !attributedString.containsValue(for: \.link) {
+      self = Text(
+        AttributedString(attributedString[attributedString.startIndex..<attributedString.endIndex]))
+      return
+    }
+
     let textValues = attributedString.runs.map { run in
       var text: Text
 

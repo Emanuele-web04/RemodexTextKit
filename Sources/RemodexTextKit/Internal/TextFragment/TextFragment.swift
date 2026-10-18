@@ -62,19 +62,52 @@ struct TextFragment<Content: AttributedStringProtocol>: View {
   }
 
   private var swiftUITextFragment: some View {
-    text
-      .customAttribute(TextFragmentAttribute())
-      .onGeometryChange(for: CGSize?.self, of: \.textContainerSize) { size in
-        guard let size, let textBuilder else { return }
-        textBuilder.sizeChanged(size, environment: textEnvironment)
-      }
+    let attachments = content.attachments()
+    let renderedText = attachmentSizedText(attachments: attachments)
       .onChange(of: content, initial: true) { _, newValue in
         self.textBuilder = TextBuilder(newValue, environment: textEnvironment)
       }
       .modifier(TextSelectionBackground())
-      .modifier(AttachmentOverlay(attachments: content.attachments()))
-      .modifier(TextLinkInteraction())
-      .modifier(TextLinkUnderline())
+    return linkInteractiveText(attachmentOverlaidText(renderedText, attachments: attachments))
+  }
+
+  @ViewBuilder
+  private func attachmentSizedText(attachments: Set<AnyAttachment>) -> some View {
+    let renderedText = text.customAttribute(TextFragmentAttribute())
+    if attachments.isEmpty {
+      // Code/prose without attachments needs no container-size adoption.
+      renderedText
+    } else {
+      renderedText
+        .onGeometryChange(for: CGSize?.self, of: \.textContainerSize) { size in
+          guard let size, let textBuilder else { return }
+          textBuilder.sizeChanged(size, environment: textEnvironment)
+        }
+    }
+  }
+
+  @ViewBuilder
+  private func attachmentOverlaidText<Rendered: View>(
+    _ renderedText: Rendered, attachments: Set<AnyAttachment>
+  ) -> some View {
+    if attachments.isEmpty {
+      // An empty attachment Canvas would still traverse every highlighted code run.
+      renderedText
+    } else {
+      renderedText.modifier(AttachmentOverlay(attachments: attachments))
+    }
+  }
+
+  @ViewBuilder
+  private func linkInteractiveText<Rendered: View>(_ renderedText: Rendered) -> some View {
+    if content.containsValue(for: \.link) {
+      renderedText
+        .modifier(TextLinkInteraction())
+        .modifier(TextLinkUnderline())
+    } else {
+      // Keep no-link code fragments out of the link gesture and underline layout walks.
+      renderedText
+    }
   }
 
   private var usesUIKitTextFragment: Bool {
