@@ -57,7 +57,8 @@ struct TextFragment<Content: AttributedStringProtocol>: View {
   }
 
   private var text: Text {
-    textBuilder?.text ?? Text(verbatim: "")
+    // Lazy layouts must measure the styled content before the initial onChange caches it.
+    textBuilder?.text ?? TextBuilder(content, environment: textEnvironment).text
   }
 
   private var swiftUITextFragment: some View {
