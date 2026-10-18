@@ -33,9 +33,10 @@ struct WithInlineStyle<Content: View>: View {
   }
 
   var body: some View {
-    content(output ?? AttributedString())
+    // Supply styled content during the first measure, before onChange caches it.
+    content(output ?? resolve(attributedString: input, style: style, in: environment))
       .onChange(of: Tuple(input, style, environment), initial: true) { _, newValue in
-        resolve(
+        self.output = resolve(
           attributedString: newValue.values.0,
           style: newValue.values.1,
           in: newValue.values.2
@@ -47,7 +48,7 @@ struct WithInlineStyle<Content: View>: View {
     attributedString: AttributedString,
     style: InlineStyle,
     in environment: TextEnvironmentValues
-  ) {
+  ) -> AttributedString {
     var output = attributedString
 
     for run in attributedString.runs {
@@ -78,6 +79,6 @@ struct WithInlineStyle<Content: View>: View {
       output[run.range].mergeAttributes(attributes, mergePolicy: .keepNew)
     }
 
-    self.output = output
+    return output
   }
 }
