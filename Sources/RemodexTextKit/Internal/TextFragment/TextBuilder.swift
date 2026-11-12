@@ -38,6 +38,11 @@ extension TextFragment {
       self.cache.setObject(Box(self.text), forKey: KeyBox(attachmentSizes))
     }
 
+    /// Builds the text for content without attachments, which needs no size-keyed cache.
+    static func text(for content: Content, environment: TextEnvironmentValues) -> Text {
+      Text(attributedString: content, attachmentSizes: [:], in: environment)
+    }
+
     func sizeChanged(_ size: CGSize, environment: TextEnvironmentValues) {
       let attachmentSizes = content.attachmentSizes(for: .init(size), in: environment)
       let cacheKey = KeyBox(attachmentSizes)

@@ -6,26 +6,44 @@ import SwiftUI
 // blocks' top and bottom spacing collapses by taking the maximum value rather than summing,
 // matching how CSS margins work.
 //
+// Each block's spacing is read from its container values while the children are resolved, so
+// the first layout pass already uses the final spacing (see `BlockSpacingKey`). The stack also
+// publishes the union of its children's spacing, which lets an enclosing list or quote collapse
+// its margins against the blocks nested inside it.
+//
 // List items can override block spacing with environment-driven list item spacing for consistent
-// spacing within lists regardless of individual block preferences.
+// spacing within lists regardless of individual block styles.
+//
+// In ordered lists the stack also lines the items' markers up by their trailing edges, read from
+// an explicit alignment guide while measuring, so every item's content starts at the same x on
+// the first layout pass.
 
 extension StructuredText {
   struct BlockVStack<Content: View>: View {
     @Environment(\.multilineTextAlignment) private var textAlignment
+    @Environment(\.listItemSpacingEnabled) private var listItemSpacingEnabled
+    @Environment(\.resolvedListItemSpacing) private var resolvedListItemSpacing
 
+    private let alignsListMarkers: Bool
     private let content: Content
 
-    init(@ViewBuilder content: () -> Content) {
+    init(alignsListMarkers: Bool = false, @ViewBuilder content: () -> Content) {
+      self.alignsListMarkers = alignsListMarkers
       self.content = content()
     }
 
     var body: some View {
       Group(subviews: content) { children in
-        BlockVStackLayout(textAlignment: textAlignment) {
-          ForEach(children) {
-            BlockLayoutView($0)
+        BlockVStackLayout(textAlignment: textAlignment, alignsListMarkers: alignsListMarkers) {
+          ForEach(children) { child in
+            child.layoutValue(
+              key: BlockSpacingKey.self,
+              value: listItemSpacingEnabled
+                ? resolvedListItemSpacing : child.containerValues.effectiveBlockSpacing
+            )
           }
         }
+        .containerValue(\.nestedBlockSpacing, children.blockSpacingUnion)
       }
     }
   }
@@ -36,35 +54,13 @@ extension StructuredText {
     static let defaultValue: TextAlignment? = nil
   }
 
-  fileprivate struct BlockLayoutView<Content: View>: View {
-    @Environment(\.listItemSpacingEnabled) private var listItemSpacingEnabled
-    @Environment(\.resolvedListItemSpacing) private var resolvedListItemSpacing
-
-    @State private var blockSpacing = BlockSpacing()
-
-    private let content: Content
-
-    init(_ content: Content) {
-      self.content = content
-    }
-
-    var body: some View {
-      // Read the block spacing preference and apply it as a layout value
-      content
-        .onPreferenceChange(BlockSpacingKey.self) { @MainActor value in
-          // Override with the resolved list item spacing if enabled
-          blockSpacing = listItemSpacingEnabled ? resolvedListItemSpacing : value
-        }
-        .layoutValue(key: BlockSpacingKey.self, value: blockSpacing)
-    }
-  }
-
   fileprivate struct BlockVStackLayout: Layout {
     struct Cache {
       let spacings: [CGFloat]
     }
 
     let textAlignment: TextAlignment
+    let alignsListMarkers: Bool
 
     func makeCache(subviews: Subviews) -> Cache {
       return Cache(
@@ -90,11 +86,12 @@ extension StructuredText {
       }
 
       var size = CGSize.zero
+      let insets = markerInsets(width: proposal.width, subviews: subviews)
 
-      for view in subviews {
-        let viewSize = view.sizeThatFits(.init(width: proposal.width, height: nil))
+      for (view, inset) in zip(subviews, insets) {
+        let viewSize = view.sizeThatFits(viewProposal(width: proposal.width, inset: inset))
         size.height += viewSize.height
-        size.width = max(size.width, viewSize.width)
+        size.width = max(size.width, inset + viewSize.width)
       }
 
       size.height += cache.spacings.reduce(0, +)
@@ -108,21 +105,25 @@ extension StructuredText {
       subviews: Subviews, cache: inout Cache
     ) {
       var currentY: CGFloat = 0
+      let insets = markerInsets(width: proposal.width, subviews: subviews)
 
       for (index, view) in zip(subviews.indices, subviews) {
-        let viewProposal = ProposedViewSize(width: proposal.width, height: nil)
+        let inset = insets[index]
+        let viewProposal = viewProposal(width: proposal.width, inset: inset)
         let viewSize = view.sizeThatFits(viewProposal)
+        let width = inset + viewSize.width
 
         var point = bounds.origin
+        point.x += inset
         let alignment = view[BlockAlignmentKey.self] ?? textAlignment
 
         switch alignment {
         case .leading:
           break  // do nothing
         case .center:
-          point.x += (bounds.width - viewSize.width) / 2
+          point.x += (bounds.width - width) / 2
         case .trailing:
-          point.x += bounds.width - viewSize.width
+          point.x += bounds.width - width
         }
 
         point.y += currentY
@@ -136,7 +137,52 @@ extension StructuredText {
         }
       }
     }
+
+    // The stack places its children itself, so it exposes none of their explicit horizontal
+    // guides. Otherwise a nested list's marker guide would leak into the enclosing list item and
+    // misalign the outer markers. Vertical guides (text baselines) still propagate.
+    func explicitAlignment(
+      of guide: HorizontalAlignment,
+      in bounds: CGRect,
+      proposal: ProposedViewSize,
+      subviews: Subviews,
+      cache: inout Cache
+    ) -> CGFloat? {
+      nil
+    }
+
+    private func viewProposal(width: CGFloat?, inset: CGFloat) -> ProposedViewSize {
+      ProposedViewSize(width: width.map { max($0 - inset, 0) }, height: nil)
+    }
+
+    // How far each item moves so its marker's trailing edge lines up with the widest marker's.
+    private func markerInsets(width: CGFloat?, subviews: Subviews) -> [CGFloat] {
+      let none = Array(repeating: CGFloat.zero, count: subviews.count)
+      guard alignsListMarkers else {
+        return none
+      }
+
+      let proposal = ProposedViewSize(width: width, height: nil)
+      let trailingEdges = subviews.map {
+        $0.dimensions(in: proposal)[explicit: HorizontalAlignment.listMarkerTrailing]
+      }
+      guard let widest = trailingEdges.compactMap(\.self).max() else {
+        return none
+      }
+      return trailingEdges.map { $0.map { widest - $0 } ?? 0 }
+    }
   }
+}
+
+extension HorizontalAlignment {
+  private enum ListMarkerTrailing: AlignmentID {
+    static func defaultValue(in context: ViewDimensions) -> CGFloat {
+      context[.trailing]
+    }
+  }
+
+  /// The trailing edge of an ordered-list item's marker.
+  static let listMarkerTrailing = Self(ListMarkerTrailing.self)
 }
 
 @available(tvOS, unavailable)

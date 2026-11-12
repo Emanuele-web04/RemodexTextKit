@@ -10,18 +10,10 @@ extension StructuredText {
 
     public func makeBody(configuration: Configuration) -> some View {
       configuration.label
-        .remodex.tableCellSpacing(horizontal: Self.borderWidth, vertical: Self.borderWidth)
+        .environment(
+          \.tableDividers, .init(color: DynamicColor.grayTertiary, thickness: Self.borderWidth)
+        )
         .remodex.blockSpacing(.fontScaled(top: 1.6, bottom: 1.6))
-        .remodex.tableOverlay { layout in
-          Canvas { context, _ in
-            for divider in layout.dividers() {
-              context.fill(
-                Path(divider),
-                with: .style(DynamicColor.grayTertiary)
-              )
-            }
-          }
-        }
         .padding(Self.borderWidth)
     }
   }

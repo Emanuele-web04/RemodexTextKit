@@ -3,66 +3,65 @@ import SwiftUI
 // MARK: - Overview
 //
 // `TextLinkUnderline` draws the environment's `LinkUnderline` under every link run of a `Text`
-// fragment. Like `TextLinkInteraction`, it reads the anchored `Text.Layout` from the
-// `Text.LayoutKey` preference and works in layout-local coordinates; each run with a `url` gets a
-// row of dots spanning its typographic bounds, `offset` points below its baseline.
+// fragment. The dots are drawn by a `TextRenderer` together with the text: each run with a `url`
+// gets a row of dots spanning its typographic bounds, `offset` points below its baseline.
+//
+// Drawing with the text, instead of from the fragment's `Text.LayoutKey` preference, keeps the
+// fragment free of geometry observers: an anchored layout changes whenever the fragment moves on
+// screen, so a preference-driven overlay would lay the text out and redraw on every frame of a
+// scroll.
 
 struct TextLinkUnderline: ViewModifier {
   @Environment(\.linkUnderline) private var linkUnderline
 
   func body(content: Content) -> some View {
     if let linkUnderline {
-      content
-        .backgroundPreferenceValue(Text.LayoutKey.self) { value in
-          GeometryReader { geometry in
-            // The dots sit below the last line's descent, outside the text's frame, so the
-            // canvas hangs past the bottom edge instead of clipping them.
-            Canvas { context, _ in
-              for anchoredLayout in value {
-                let origin = geometry[anchoredLayout.origin]
-                draw(linkUnderline, in: anchoredLayout.layout, origin: origin, context: &context)
-              }
-            }
-            .frame(
-              width: geometry.size.width,
-              height: geometry.size.height + linkUnderline.offset + linkUnderline.dotDiameter,
-              alignment: .top
-            )
-            .foregroundStyle(linkUnderline.color.map(AnyShapeStyle.init) ?? AnyShapeStyle(.tint))
-          }
-          .allowsHitTesting(false)
-        }
+      content.textRenderer(LinkUnderlineRenderer(underline: linkUnderline))
     } else {
       content
     }
   }
+}
 
-  private func draw(
-    _ underline: LinkUnderline,
-    in layout: Text.Layout,
-    origin: CGPoint,
-    context: inout GraphicsContext
-  ) {
+private struct LinkUnderlineRenderer: TextRenderer {
+  let underline: LinkUnderline
+
+  // The dots sit below the last line's descent, outside the text's frame.
+  var displayPadding: EdgeInsets {
+    EdgeInsets(
+      top: 0, leading: 0, bottom: max(0, underline.offset + underline.dotDiameter), trailing: 0)
+  }
+
+  func draw(layout: Text.Layout, in context: inout GraphicsContext) {
+    for line in layout {
+      context.draw(line)
+    }
+
     let step = underline.dotDiameter + underline.spacing
     guard step > 0 else { return }
     var dots = Path()
     for line in layout {
       for run in line where run.url != nil {
         let bounds = run.typographicBounds
-        let y = origin.y + bounds.origin.y + underline.offset
-        var x = origin.x + bounds.rect.minX + underline.dotDiameter / 2
-        let maxX = origin.x + bounds.rect.maxX
-        while x <= maxX {
-          dots.addEllipse(in: CGRect(
-            x: x - underline.dotDiameter / 2,
-            y: y - underline.dotDiameter / 2,
-            width: underline.dotDiameter,
-            height: underline.dotDiameter
-          ))
+        let y = bounds.origin.y + underline.offset
+        var x = bounds.rect.minX + underline.dotDiameter / 2
+        while x <= bounds.rect.maxX {
+          dots.addEllipse(
+            in: CGRect(
+              x: x - underline.dotDiameter / 2,
+              y: y - underline.dotDiameter / 2,
+              width: underline.dotDiameter,
+              height: underline.dotDiameter
+            ))
           x += step
         }
       }
     }
-    context.fill(dots, with: .foreground)
+    guard !dots.isEmpty else { return }
+    if let color = underline.color {
+      context.fill(dots, with: .color(color))
+    } else {
+      context.fill(dots, with: .style(.tint))
+    }
   }
 }

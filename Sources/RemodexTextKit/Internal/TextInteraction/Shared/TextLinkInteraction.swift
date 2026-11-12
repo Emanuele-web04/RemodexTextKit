@@ -8,29 +8,48 @@ import SwiftUI
 // preference. This modifier reads the anchored layout, converts tap locations to layout-local
 // coordinates, and looks for the first run whose typographic bounds contains the tap. When a run
 // has a `url`, the modifier invokes the environment’s `openURL` action.
+//
+// Selectable text on iOS opens its links from the selection overlay instead (see
+// `UITextInteractionView`), which sits above the fragment and receives its taps. Observing the
+// anchored layout there as well would only lay the fragment out again on every frame it moves.
 
 struct TextLinkInteraction: ViewModifier {
   @Environment(\.openURL) private var openURL
+  #if REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION && canImport(UIKit)
+    @Environment(\.textSelection) private var textSelection
+  #endif
 
   func body(content: Content) -> some View {
     #if REMODEX_TEXT_KIT_ENABLE_LINKS
-      content
-        .overlayPreferenceValue(Text.LayoutKey.self) { value in
-          if let anchoredLayout = value.first {
-            GeometryReader { geometry in
-              Color.clear
-                .contentShape(.rect)
-                .gesture(
-                  tap(
-                    origin: geometry[anchoredLayout.origin],
-                    layout: anchoredLayout.layout
+      if handlesTaps {
+        content
+          .overlayPreferenceValue(Text.LayoutKey.self) { value in
+            if let anchoredLayout = value.first {
+              GeometryReader { geometry in
+                Color.clear
+                  .contentShape(.rect)
+                  .gesture(
+                    tap(
+                      origin: geometry[anchoredLayout.origin],
+                      layout: anchoredLayout.layout
+                    )
                   )
-                )
+              }
             }
           }
-        }
+      } else {
+        content
+      }
     #else
       content
+    #endif
+  }
+
+  private var handlesTaps: Bool {
+    #if REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION && canImport(UIKit)
+      !textSelection.allowsSelection
+    #else
+      true
     #endif
   }
 

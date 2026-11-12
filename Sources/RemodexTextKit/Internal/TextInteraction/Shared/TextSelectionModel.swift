@@ -10,6 +10,10 @@
   // rebuilt at any time as SwiftUI resolves new `Text.Layout` values. When the layout collection
   // changes, the model attempts to reconcile the current selection into the new layout so the
   // selection stays stable across updates.
+  //
+  // On iOS the layouts are only collected while `observesLayout` is set (see
+  // `TextSelectionInteraction`); work that needs them right after the text is touched waits for
+  // the first collection with `whenLayoutAvailable`.
 
   @Observable
   final class TextSelectionModel {
@@ -25,6 +29,15 @@
       }
     }
 
+    /// Whether the selectable text publishes its layouts to this model.
+    var observesLayout = false {
+      didSet {
+        if !observesLayout {
+          pendingLayoutAction = nil
+        }
+      }
+    }
+
     @ObservationIgnored
     var selectionWillChange: (() -> Void)?
 
@@ -37,6 +50,9 @@
     @ObservationIgnored
     private weak var coordinator: TextSelectionCoordinator?
 
+    @ObservationIgnored
+    private var pendingLayoutAction: (() -> Void)?
+
     init(
       layoutCollection: any TextLayoutCollection = EmptyTextLayoutCollection(),
       coordinator: TextSelectionCoordinator? = nil
@@ -45,7 +61,18 @@
       setCoordinator(coordinator)
     }
 
+    /// Runs `action` once the model has layouts: now, or when the next collection arrives. A newer
+    /// request replaces an older one, and none survives the model stopping to observe layouts.
+    func whenLayoutAvailable(_ action: @escaping () -> Void) {
+      if layoutCollection.layouts.isEmpty {
+        pendingLayoutAction = action
+      } else {
+        action()
+      }
+    }
+
     func setLayoutCollection(_ layoutCollection: any TextLayoutCollection) {
+      defer { performPendingLayoutAction() }
       guard !layoutCollection.isEqual(to: self.layoutCollection) else {
         return
       }
@@ -65,6 +92,14 @@
         selectedRange,
         from: oldLayoutCollection
       )
+    }
+
+    private func performPendingLayoutAction() {
+      guard let action = pendingLayoutAction, !layoutCollection.layouts.isEmpty else {
+        return
+      }
+      pendingLayoutAction = nil
+      action()
     }
 
     func setCoordinator(_ coordinator: TextSelectionCoordinator?) {

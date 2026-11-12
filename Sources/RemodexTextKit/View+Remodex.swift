@@ -20,16 +20,22 @@ extension View {
 
 extension RemodexNamespace where Base: View {
   /// Sets the spacing above and below the current block.
+  ///
+  /// Apply it to the outermost view of a block style's body. The value reaches the enclosing
+  /// block stack through modifiers and type-erased views, but not out of a container such as a
+  /// `VStack`. When the modifier is applied more than once, the outermost value wins.
   @MainActor public func blockSpacing(_ blockSpacing: StructuredText.BlockSpacing) -> some View {
-    base.preference(key: StructuredText.BlockSpacingKey.self, value: blockSpacing)
+    base.containerValue(\.blockSpacing, blockSpacing)
   }
 
   /// Sets the spacing above and below the current block using a font-relative value.
+  ///
+  /// Apply it to the outermost view of a block style's body, as with the fixed-value overload.
   @MainActor public func blockSpacing(
     _ blockSpacing: FontScaled<StructuredText.BlockSpacing>
   ) -> some View {
     WithFontScaledValue(blockSpacing) { blockSpacing in
-      base.preference(key: StructuredText.BlockSpacingKey.self, value: blockSpacing)
+      base.containerValue(\.blockSpacing, blockSpacing)
     }
   }
 
@@ -205,13 +211,15 @@ extension RemodexNamespace where Base: View {
   }
 
   /// Sets the spacing used between table cells in ``StructuredText``.
+  ///
+  /// Apply it to a view that contains the table style's `configuration.label`.
   public func tableCellSpacing(
     horizontal: CGFloat? = nil,
     vertical: CGFloat? = nil
   ) -> some View {
-    base.preference(
-      key: StructuredText.TableCell.SpacingKey.self,
-      value: .init(horizontal: horizontal, vertical: vertical)
+    base.environment(
+      \.tableCellSpacing,
+      .init(horizontal: horizontal, vertical: vertical)
     )
   }
 

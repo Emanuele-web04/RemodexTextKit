@@ -111,7 +111,7 @@ public struct InlineText: View {
   }
 
   public var body: some View {
-    WithAttachments(parsed.attributedString(for: markup, parser: parser)) {
+    WithAttachments(parsed.document(for: markup, parser: parser)) {
       WithInlineStyle($0) {
         TextFragment($0)
           .modifier(TextSelectionInteraction())

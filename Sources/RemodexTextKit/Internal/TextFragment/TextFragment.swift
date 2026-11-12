@@ -8,19 +8,27 @@ import SwiftUI
 //
 // Attachments are represented as placeholder images tagged with AttachmentAttribute. The
 // actual attachment views are rendered in an overlay using the resolved Text.Layout
-// geometry. Three modifiers are applied at the fragment level:
+// geometry. These modifiers are applied at the fragment level:
 //
 // - TextSelectionBackground renders selection highlights on macOS
+// - TextLayoutPublisher hands the layout to the enclosing selection while it asks for it
 // - AttachmentOverlay draws attachments at their run locations with selection-aware dimming
-// - TextLinkInteraction handles tap gestures on links
+// - TextLinkInteraction handles tap gestures on links of text that is not selectable
+// - TextLinkUnderline draws the dotted link underline with the text
 //
-// These overlays use backgroundPreferenceValue and overlayPreferenceValue to access
+// The overlays use backgroundPreferenceValue and overlayPreferenceValue to access
 // Text.Layout and render in fragment-local coordinates. Fragment-level overlays enable
-// coordinate space isolation and keep scrollable regions interactive.
+// coordinate space isolation and keep scrollable regions interactive. An overlay that reads
+// the layout follows the fragment on every frame it moves, so only these opt-in or uncommon
+// cases read it.
 //
 // An ancestor view must define a named coordinate space (.textContainer) for the text
 // container. TextFragment uses onGeometryChange to observe the container size and rebuild
 // Text when attachment sizes need to change.
+//
+// The rendered Text and the facts derived from the content (attachments, links) are memoized
+// in a reference type updated during `body`, so a fragment builds its Text once per content
+// change, on its first frame, and never renders the previous content after a change.
 //
 // TextFragment is used by InlineText and StructuredText (via BlockContent) to render
 // attributed content with inline attachments, links, and selection.
@@ -28,7 +36,7 @@ import SwiftUI
 struct TextFragment<Content: AttributedStringProtocol>: View {
   @Environment(\.textEnvironment) private var textEnvironment
   @Environment(\.uikitTextRenderingOptions) private var uikitTextRenderingOptions
-  @State private var textBuilder: TextBuilder?
+  @State private var memo = Memo()
 
   private let content: Content
 
@@ -56,33 +64,29 @@ struct TextFragment<Content: AttributedStringProtocol>: View {
     #endif
   }
 
-  private var text: Text {
-    // Lazy layouts must measure the styled content before the initial onChange caches it.
-    textBuilder?.text ?? TextBuilder(content, environment: textEnvironment).text
-  }
-
   private var swiftUITextFragment: some View {
-    let attachments = content.attachments()
-    let renderedText = attachmentSizedText(attachments: attachments)
-      .onChange(of: content, initial: true) { _, newValue in
-        self.textBuilder = TextBuilder(newValue, environment: textEnvironment)
-      }
+    let rendering = memo.rendering(for: content, environment: textEnvironment)
+    let renderedText = attachmentSizedText(rendering)
       .modifier(TextSelectionBackground())
-    return linkInteractiveText(attachmentOverlaidText(renderedText, attachments: attachments))
+      .modifier(TextLayoutPublisher())
+    return linkInteractiveText(
+      attachmentOverlaidText(renderedText, attachments: rendering.attachments),
+      containsLinks: rendering.containsLinks
+    )
   }
 
   @ViewBuilder
-  private func attachmentSizedText(attachments: Set<AnyAttachment>) -> some View {
-    let renderedText = text.customAttribute(TextFragmentAttribute())
-    if attachments.isEmpty {
-      // Code/prose without attachments needs no container-size adoption.
-      renderedText
-    } else {
+  private func attachmentSizedText(_ rendering: Rendering) -> some View {
+    let renderedText = rendering.text.customAttribute(TextFragmentAttribute())
+    if let textBuilder = rendering.textBuilder {
       renderedText
         .onGeometryChange(for: CGSize?.self, of: \.textContainerSize) { size in
-          guard let size, let textBuilder else { return }
+          guard let size else { return }
           textBuilder.sizeChanged(size, environment: textEnvironment)
         }
+    } else {
+      // Code/prose without attachments needs no container-size adoption.
+      renderedText
     }
   }
 
@@ -99,8 +103,10 @@ struct TextFragment<Content: AttributedStringProtocol>: View {
   }
 
   @ViewBuilder
-  private func linkInteractiveText<Rendered: View>(_ renderedText: Rendered) -> some View {
-    if content.containsValue(for: \.link) {
+  private func linkInteractiveText<Rendered: View>(
+    _ renderedText: Rendered, containsLinks: Bool
+  ) -> some View {
+    if containsLinks {
       renderedText
         .modifier(TextLinkInteraction())
         .modifier(TextLinkUnderline())
@@ -124,6 +130,48 @@ struct TextFragment<Content: AttributedStringProtocol>: View {
     }
 
     return AttributedString(String(content.characters[...]))
+  }
+}
+
+extension TextFragment {
+  struct Rendering {
+    // Read through `text` so a builder's resize-driven updates re-render the fragment.
+    @MainActor var text: Text { textBuilder?.text ?? staticText }
+
+    let attachments: Set<AnyAttachment>
+    let containsLinks: Bool
+    let textBuilder: TextBuilder?
+    fileprivate let staticText: Text
+  }
+
+  // A reference type, so updating the memo inside `body` does not invalidate the view.
+  @MainActor final class Memo {
+    private var content: Content?
+    private var environment: TextEnvironmentValues?
+    private var rendering: Rendering?
+
+    func rendering(for content: Content, environment: TextEnvironmentValues) -> Rendering {
+      if let rendering, content == self.content,
+        rendering.textBuilder == nil || environment == self.environment
+      {
+        return rendering
+      }
+
+      let attachments = content.attachments()
+      // Only attachments are sized by the environment; plain text keeps one Text value and no
+      // resize cache.
+      let textBuilder = attachments.isEmpty ? nil : TextBuilder(content, environment: environment)
+      let rendering = Rendering(
+        attachments: attachments,
+        containsLinks: content.containsValue(for: \.link),
+        textBuilder: textBuilder,
+        staticText: textBuilder?.text ?? TextBuilder.text(for: content, environment: environment)
+      )
+      self.content = content
+      self.environment = environment
+      self.rendering = rendering
+      return rendering
+    }
   }
 }
 

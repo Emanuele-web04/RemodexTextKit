@@ -2,16 +2,15 @@ import SwiftUI
 
 // MARK: - Overview
 //
-// OrderedList aligns all list item markers to a consistent width for uniform layout. Each marker
-// measures itself and reports its width via preferences. The maximum width is taken and applied
-// to all markers, ensuring alignment even when marker widths vary (e.g., "1." vs "10.").
+// OrderedList aligns all list item markers by their trailing edges, so item content lines up
+// even when marker widths vary (e.g., "1." vs "10."). Each marker marks its trailing edge with an
+// explicit alignment guide, and the list's `BlockVStack` insets the items with narrower markers
+// while it lays them out.
 
 extension StructuredText {
   struct OrderedList: View {
     @Environment(\.listItemSpacing) private var listItemSpacing
     @Environment(\.textEnvironment) private var textEnvironment
-
-    @State private var markerWidth: CGFloat?
 
     private let intent: PresentationIntent.IntentType?
     private let content: AttributedSubstring
@@ -24,19 +23,15 @@ extension StructuredText {
     var body: some View {
       let runs = content.blockRuns(parent: intent)
 
-      BlockVStack {
-        ForEach(runs.indices, id: \.self) { index in
-          let run = runs[index]
+      BlockVStack(alignsListMarkers: true) {
+        ForEach(runs.identifiedIndices, id: \.id) { item in
+          let run = runs[item.index]
 
           OrderedListItem(
             intent: run.intent,
-            content: content[run.range],
-            markerWidth: markerWidth
+            content: content[run.range]
           )
         }
-      }
-      .onPreferenceChange(MarkerWidthKey.self) { @MainActor in
-        markerWidth = $0
       }
       .environment(\.resolvedListItemSpacing, listItemSpacing.resolve(in: textEnvironment))
       .environment(\.listItemSpacingEnabled, true)
@@ -51,32 +46,29 @@ extension StructuredText {
 
     private let intent: PresentationIntent.IntentType?
     private let content: AttributedSubstring
-    private let markerWidth: CGFloat?
 
     init(
       intent: PresentationIntent.IntentType?,
-      content: AttributedSubstring,
-      markerWidth: CGFloat?
+      content: AttributedSubstring
     ) {
       self.intent = intent
       self.content = content
-      self.markerWidth = markerWidth
     }
 
     var body: some View {
-      let configuration = ListItemStyleConfiguration(
-        marker: .init(marker),
-        block: .init(
-          BlockContent(
-            parent: intent,
-            content: content
-          )
-        ),
-        indentationLevel: indentationLevel
-      )
-      let resolvedStyle = listItemStyle.resolve(configuration: configuration)
+      // The item style may place the block in a stack, which container values cannot leave,
+      // so resolve the nested blocks here and publish their spacing on the item itself.
+      Group(subviews: BlockContent(parent: intent, content: content)) { blocks in
+        let configuration = ListItemStyleConfiguration(
+          marker: .init(marker),
+          block: .init(blocks),
+          indentationLevel: indentationLevel
+        )
+        let resolvedStyle = listItemStyle.resolve(configuration: configuration)
 
-      AnyView(resolvedStyle)
+        AnyView(resolvedStyle)
+          .containerValue(\.nestedBlockSpacing, blocks.blockSpacingUnion)
+      }
     }
 
     private var marker: some View {
@@ -88,17 +80,7 @@ extension StructuredText {
           )
         )
       )
-      .background {
-        // Propagate the marker width
-        GeometryReader { proxy in
-          Color.clear
-            .preference(
-              key: MarkerWidthKey.self,
-              value: proxy.size.width
-            )
-        }
-      }
-      .frame(width: markerWidth, alignment: .trailing)
+      .alignmentGuide(.listMarkerTrailing) { $0[.trailing] }
     }
 
     private var indentationLevel: Int {
@@ -110,14 +92,6 @@ extension StructuredText {
         return 0
       }
       return ordinal
-    }
-  }
-
-  fileprivate struct MarkerWidthKey: PreferenceKey {
-    static let defaultValue: CGFloat? = nil
-
-    static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) {
-      value = [value, nextValue()].compactMap(\.self).max()
     }
   }
 }

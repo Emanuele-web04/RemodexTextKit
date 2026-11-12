@@ -116,7 +116,7 @@ public struct StructuredText: View {
   }
 
   public var body: some View {
-    WithAttachments(parsed.attributedString(for: markup, parser: parser)) {
+    WithAttachments(parsed.document(for: markup, parser: parser)) {
       BlockContent(content: $0)
         .modifier(TextSelectionInteraction())
         .modifier(TextSelectionCoordination())

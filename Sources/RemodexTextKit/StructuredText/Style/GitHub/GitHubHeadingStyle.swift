@@ -14,7 +14,6 @@ extension StructuredText {
           makeLabel(configuration: configuration)
             .remodex.fontScale(fontScale)
             .remodex.lineSpacing(.fontScaled(0.125))
-            .remodex.blockSpacing(.init(top: 24, bottom: 16))
             .fontWeight(.semibold)
           if headingLevel <= 2 {
             Divider()
@@ -22,6 +21,8 @@ extension StructuredText {
           }
         }
       }
+      // Outside the stack, which block spacing cannot leave.
+      .remodex.blockSpacing(.init(top: 24, bottom: 16))
     }
 
     @ViewBuilder

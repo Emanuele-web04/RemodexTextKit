@@ -11,32 +11,23 @@ extension StructuredText {
 
     /// Creates an overflow table style.
     ///
-    /// - Parameter relativeWidth: The maximum width ratio relative to the scroll container width. Defaults to `1.5`.
+    /// - Parameter relativeWidth: The maximum width ratio relative to the scroll container width.
+    ///   Defaults to `1.5`. Pass `.infinity` to let the table keep its ideal width; the container
+    ///   width is then never measured.
     public init(relativeWidth: CGFloat = 1.5) {
       self.relativeWidth = relativeWidth
     }
 
     public func makeBody(configuration: Configuration) -> some View {
-      Overflow { state in
-        let maxWidth = state.containerWidth.map {
-          $0 * relativeWidth
-        }
+      Overflow(reportsContainerWidth: false) { state in
         configuration.label
           .fixedSize(horizontal: false, vertical: true)
-          .frame(maxWidth: maxWidth, alignment: .leading)
-          .remodex.tableOverlay { layout in
-            Canvas { context, _ in
-              for divider in layout.dividers() {
-                context.fill(
-                  Path(divider),
-                  with: .style(DynamicColor.grayTertiary)
-                )
-              }
-            }
-          }
+          .modifier(OverflowWidthLimit(relativeWidth: state == .wrap ? nil : relativeWidth))
           .padding(Self.borderWidth)
       }
-      .remodex.tableCellSpacing(horizontal: Self.borderWidth, vertical: Self.borderWidth)
+      .environment(
+        \.tableDividers, .init(color: DynamicColor.grayTertiary, thickness: Self.borderWidth)
+      )
       .remodex.blockSpacing(.fontScaled(top: 1.6, bottom: 1.6))
     }
   }

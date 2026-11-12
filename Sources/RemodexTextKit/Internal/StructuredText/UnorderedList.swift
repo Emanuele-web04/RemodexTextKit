@@ -17,8 +17,8 @@ extension StructuredText {
       let runs = content.blockRuns(parent: intent)
 
       BlockVStack {
-        ForEach(runs.indices, id: \.self) { index in
-          let run = runs[index]
+        ForEach(runs.identifiedIndices, id: \.id) { item in
+          let run = runs[item.index]
 
           UnorderedListItem(
             intent: run.intent,
@@ -49,19 +49,19 @@ extension StructuredText {
     }
 
     var body: some View {
-      let configuration = ListItemStyleConfiguration(
-        marker: .init(marker),
-        block: .init(
-          BlockContent(
-            parent: intent,
-            content: content
-          )
-        ),
-        indentationLevel: indentationLevel
-      )
-      let resolvedStyle = listItemStyle.resolve(configuration: configuration)
+      // The item style may place the block in a stack, which container values cannot leave,
+      // so resolve the nested blocks here and publish their spacing on the item itself.
+      Group(subviews: BlockContent(parent: intent, content: content)) { blocks in
+        let configuration = ListItemStyleConfiguration(
+          marker: .init(marker),
+          block: .init(blocks),
+          indentationLevel: indentationLevel
+        )
+        let resolvedStyle = listItemStyle.resolve(configuration: configuration)
 
-      AnyView(resolvedStyle)
+        AnyView(resolvedStyle)
+          .containerValue(\.nestedBlockSpacing, blocks.blockSpacingUnion)
+      }
     }
 
     private var marker: some View {

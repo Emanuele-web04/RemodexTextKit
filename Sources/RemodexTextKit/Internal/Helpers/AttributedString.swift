@@ -127,6 +127,29 @@ extension AttributedString {
       boundaries.index(before: i)
     }
 
+    /// A stable identity for each block: its presentation intent (kind plus parser identity),
+    /// disambiguated by occurrence. Unlike the bare index, appending blocks or changing a
+    /// block's kind does not hand one block's view state to another.
+    struct IdentifiedIndex: Hashable {
+      struct ID: Hashable {
+        let intent: PresentationIntent.IntentType?
+        let occurrence: Int
+      }
+
+      let id: ID
+      let index: Int
+    }
+
+    var identifiedIndices: [IdentifiedIndex] {
+      var occurrences: [PresentationIntent.IntentType?: Int] = [:]
+      return boundaries.indices.map { index in
+        let intent = boundaries[index].intent
+        let occurrence = occurrences[intent, default: 0]
+        occurrences[intent] = occurrence + 1
+        return IdentifiedIndex(id: .init(intent: intent, occurrence: occurrence), index: index)
+      }
+    }
+
     subscript(position: Index) -> BlockRun {
       let boundary = boundaries[position]
       let nextRunIndex =

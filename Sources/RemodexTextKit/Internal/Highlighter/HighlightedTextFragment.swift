@@ -2,9 +2,17 @@ import SwiftUI
 
 // MARK: - Overview
 //
-// HighlightedTextFragment displays syntax-highlighted code using a two-phase approach.
-// Tokenization runs asynchronously and is keyed by content plus language, while highlighting
-// runs synchronously on token or environment changes (theme, color scheme, dynamic type).
+// HighlightedTextFragment displays syntax-highlighted code. Highlighted results live in a
+// main-actor cache keyed by code, language, theme, and text environment, so a block that mounts
+// again (for example a timeline row scrolled back into view) renders its highlighted code from
+// `body` on the first frame, with no task and no swap.
+//
+// On a cache miss the block renders plain code, tokenizes off the main thread, and applies the
+// result once. Only content that keeps changing under the same view (streaming) waits for a pause
+// before tokenizing. A highlighted result is only ever shown for the content it was made from.
+//
+// Highlighting changes colors and, for some tokens, weight; monospaced faces keep the same
+// advances across weights, so the swap from plain to highlighted code does not resize the block.
 //
 // The presentationIntent is preserved after highlighting so pasteboard formatters can
 // reconstruct the block structure when copying code.
@@ -29,40 +37,34 @@ struct HighlightedTextFragment: View {
     self.theme = theme
   }
 
-  @ViewBuilder
   var body: some View {
-    renderedCode
-      .task(id: tokenizationRequest) {
-        await model.tokenize(
-          content: content,
-          languageHint: languageHint
-        )
-      }
-      .onChange(of: Tuple(model.tokens, textEnvironment)) { _, newValue in
-        model.highlight(
-          tokens: newValue.values.0,
-          presentationIntent: content.presentationIntent,
-          using: theme,
-          environment: newValue.values.1
-        )
-      }
-  }
+    let request = Request(
+      code: String(content.characters[...]),
+      languageHint: languageHint,
+      theme: theme,
+      environment: textEnvironment,
+      presentationIntent: content.presentationIntent
+    )
+    let highlightedCode = model.highlightedCode(for: request)
 
-  private var tokenizationRequest: TokenizationRequest {
-    TokenizationRequest(content: content, languageHint: languageHint)
-  }
-
-  private struct TokenizationRequest: Equatable {
-    let content: AttributedSubstring
-    let languageHint: String?
+    renderedCode(highlightedCode ?? AttributedString(content))
+      // In a background so the code keeps its identity when highlighting lands.
+      .background {
+        if highlightedCode == nil, languageHint != nil {
+          Color.clear
+            .task(id: request) {
+              await model.highlight(request)
+            }
+        }
+      }
   }
 
   @ViewBuilder
-  private var renderedCode: some View {
+  private func renderedCode(_ code: AttributedString) -> some View {
     #if canImport(UIKit) && !os(watchOS) && !os(tvOS)
       if uikitTextRenderingOptions.prefersTextFragments {
         UIKitAttributedTextView(
-          attributedString: model.highlightedCode ?? AttributedString(content),
+          attributedString: code,
           textEnvironment: textEnvironment,
           isSelectable: uikitTextRenderingOptions.isSelectable,
           wrapsText: false,
@@ -72,85 +74,150 @@ struct HighlightedTextFragment: View {
           )
         )
       } else {
-        swiftUITextFragment
+        swiftUITextFragment(code)
       }
     #else
-      swiftUITextFragment
+      swiftUITextFragment(code)
     #endif
   }
 
-  private var swiftUITextFragment: some View {
-    TextFragment(model.highlightedCode ?? AttributedString(content))
+  private func swiftUITextFragment(_ code: AttributedString) -> some View {
+    TextFragment(code)
       .foregroundStyle(theme.foregroundColor)
   }
 }
 
 extension HighlightedTextFragment {
+  struct Request: Hashable, Sendable {
+    let code: String
+    let languageHint: String?
+    let theme: StructuredText.HighlighterTheme
+    let environment: TextEnvironmentValues
+    let presentationIntent: PresentationIntent?
+  }
+
   @MainActor @Observable final class Model {
-    var tokens: [CodeToken] = []
-    var highlightedCode: AttributedString?
-    private var tokenizationKey: TokenizationKey?
+    // Bumped when a highlight lands so `body` reads the new result.
+    private var completedHighlights = 0
+    @ObservationIgnored private var memo: (request: Request, value: AttributedString?)?
+    @ObservationIgnored private var lastRequestedCode: String?
 
-    func tokenize(content: AttributedSubstring, languageHint: String?) async {
-      let code = String(content.characters[...])
-      let key = TokenizationKey(code: code, languageHint: languageHint)
-      let plainTokens = [CodeToken(content: code, type: .plain)]
-
-      if tokenizationKey != key {
-        tokenizationKey = key
-        if tokens != plainTokens {
-          tokens = plainTokens
-        }
+    /// The highlighted code for exactly this request, or `nil` to render it plain.
+    func highlightedCode(for request: Request) -> AttributedString? {
+      _ = completedHighlights
+      if let memo, memo.request == request {
+        return memo.value
       }
+      let value = HighlightCache.shared.value(for: request)
+      memo = (request, value)
+      return value
+    }
 
-      guard let tokenizer = CodeTokenizer.shared, let languageHint else {
+    func highlight(_ request: Request) async {
+      guard let languageHint = request.languageHint else {
         return
       }
 
-      // Debounce: content changing rapidly (streaming) cancels this task and
-      // re-fires; only content stable for the interval reaches the JS tokenizer.
-      try? await Task.sleep(nanoseconds: 120_000_000)
-      guard !Task.isCancelled, tokenizationKey == key else { return }
-
-      let nextTokens = await tokenizer.tokenize(code: code, language: languageHint)
-      guard !Task.isCancelled, tokenizationKey == key else { return }
-
-      if tokens != nextTokens {
-        tokens = nextTokens
+      // Debounce content that changes under this view (streaming), so only code that is stable
+      // for the interval reaches the JS tokenizer. A first mount tokenizes at once.
+      let isChanging = lastRequestedCode.map { $0 != request.code } ?? false
+      lastRequestedCode = request.code
+      if isChanging {
+        try? await Task.sleep(for: .milliseconds(120))
+        guard !Task.isCancelled else { return }
       }
+
+      guard let tokenizer = CodeTokenizer.shared else {
+        return
+      }
+      let tokens = await tokenizer.tokenize(code: request.code, language: languageHint)
+      guard !Task.isCancelled else { return }
+
+      let value = Self.highlight(tokens: tokens, request: request)
+      HighlightCache.shared.store(value, for: request)
+      memo = (request, value)
+      completedHighlights &+= 1
     }
 
-    func highlight(
-      tokens: [CodeToken],
-      presentationIntent: PresentationIntent?,
-      using theme: StructuredText.HighlighterTheme,
-      environment: TextEnvironmentValues
-    ) {
+    static func highlight(tokens: [CodeToken], request: Request) -> AttributedString {
       var attributes = AttributeContainer()
       // Re-apply the presentation intent for pasteboard formatters
-      attributes.presentationIntent = presentationIntent
-      ForegroundColorProperty(theme.foregroundColor)
-        .apply(in: &attributes, environment: environment)
+      attributes.presentationIntent = request.presentationIntent
+      ForegroundColorProperty(request.theme.foregroundColor)
+        .apply(in: &attributes, environment: request.environment)
       var highlightedCode = AttributedString()
+      // Token properties are resolved once per token type, not once per token.
+      var attributesByType: [StructuredText.HighlighterTheme.TokenType: AttributeContainer] = [:]
 
       for token in tokens {
-        var content = AttributedString(token.content)
-        var tokenAttributes = attributes
-
-        if let tokenProperties = theme.tokenProperties[token.type] {
-          tokenProperties.apply(in: &tokenAttributes, environment: environment)
+        let tokenAttributes: AttributeContainer
+        if let cached = attributesByType[token.type] {
+          tokenAttributes = cached
+        } else {
+          var resolved = attributes
+          request.theme.tokenProperties[token.type]?
+            .apply(in: &resolved, environment: request.environment)
+          attributesByType[token.type] = resolved
+          tokenAttributes = resolved
         }
 
-        content.mergeAttributes(tokenAttributes)
-        highlightedCode.append(content)
+        highlightedCode.append(AttributedString(token.content, attributes: tokenAttributes))
       }
 
-      self.highlightedCode = highlightedCode
+      return highlightedCode
     }
+  }
+}
 
-    private struct TokenizationKey: Equatable {
-      let code: String
-      let languageHint: String?
+// Least-recently-used highlighted code, bounded by entry count and by the total size of the
+// cached source so a few huge blocks cannot pin a lot of memory.
+@MainActor final class HighlightCache {
+  static let shared = HighlightCache()
+
+  private struct Entry {
+    let value: AttributedString
+    let codeBytes: Int
+    var lastUse: UInt64
+  }
+
+  private let entryLimit: Int
+  private let codeByteLimit: Int
+  private var entries: [HighlightedTextFragment.Request: Entry] = [:]
+  private var codeBytes = 0
+  private var clock: UInt64 = 0
+
+  init(entryLimit: Int = 96, codeByteLimit: Int = 512 * 1024) {
+    self.entryLimit = entryLimit
+    self.codeByteLimit = codeByteLimit
+  }
+
+  func value(for request: HighlightedTextFragment.Request) -> AttributedString? {
+    guard var entry = entries[request] else {
+      return nil
+    }
+    clock &+= 1
+    entry.lastUse = clock
+    entries[request] = entry
+    return entry.value
+  }
+
+  func store(_ value: AttributedString, for request: HighlightedTextFragment.Request) {
+    let bytes = request.code.utf8.count
+    guard bytes <= codeByteLimit else {
+      return
+    }
+    if let existing = entries.removeValue(forKey: request) {
+      codeBytes -= existing.codeBytes
+    }
+    clock &+= 1
+    entries[request] = Entry(value: value, codeBytes: bytes, lastUse: clock)
+    codeBytes += bytes
+
+    while entries.count > entryLimit || codeBytes > codeByteLimit,
+      let oldest = entries.min(by: { $0.value.lastUse < $1.value.lastUse })
+    {
+      entries.removeValue(forKey: oldest.key)
+      codeBytes -= oldest.value.codeBytes
     }
   }
 }

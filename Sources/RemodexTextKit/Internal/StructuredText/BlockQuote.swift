@@ -13,18 +13,18 @@ extension StructuredText {
     }
 
     var body: some View {
-      let configuration = BlockStyleConfiguration(
-        label: .init(
-          BlockContent(
-            parent: intent,
-            content: content
-          )
-        ),
-        indentationLevel: indentationLevel
-      )
-      let resolvedStyle = blockQuoteStyle.resolve(configuration: configuration)
+      // The quote style may place its label in a stack, which container values cannot leave,
+      // so resolve the nested blocks here and publish their spacing on the quote itself.
+      Group(subviews: BlockContent(parent: intent, content: content)) { blocks in
+        let configuration = BlockStyleConfiguration(
+          label: .init(blocks),
+          indentationLevel: indentationLevel
+        )
+        let resolvedStyle = blockQuoteStyle.resolve(configuration: configuration)
 
-      AnyView(resolvedStyle)
+        AnyView(resolvedStyle)
+          .containerValue(\.nestedBlockSpacing, blocks.blockSpacingUnion)
+      }
     }
 
     private var indentationLevel: Int {

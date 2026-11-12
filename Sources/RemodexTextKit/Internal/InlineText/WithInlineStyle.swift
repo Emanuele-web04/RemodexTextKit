@@ -13,13 +13,15 @@ import SwiftUI
 // The view reads `InlineStyle` and `TextEnvironmentValues` from the environment, then produces a
 // styled copy of the attributed string by merging attributes into each matching span.
 //
-// Styling is recomputed whenever the input, style, or environment snapshot changes.
+// Styling is recomputed whenever the input, style, or environment snapshot changes. The result is
+// memoized in a reference type during `body`, so a view resolves its style once per change and
+// renders the styled content on its first frame.
 
 struct WithInlineStyle<Content: View>: View {
   @Environment(\.inlineStyle) private var style
   @Environment(\.textEnvironment) private var environment
 
-  @State private var output: AttributedString?
+  @State private var memo = Memo()
 
   private let input: AttributedString
   private let content: (AttributedString) -> Content
@@ -33,18 +35,31 @@ struct WithInlineStyle<Content: View>: View {
   }
 
   var body: some View {
-    // Supply styled content during the first measure, before onChange caches it.
-    content(output ?? resolve(attributedString: input, style: style, in: environment))
-      .onChange(of: Tuple(input, style, environment), initial: true) { _, newValue in
-        self.output = resolve(
-          attributedString: newValue.values.0,
-          style: newValue.values.1,
-          in: newValue.values.2
-        )
+    content(memo.output(for: input, style: style, environment: environment))
+  }
+}
+
+extension WithInlineStyle {
+  // A reference type, so updating the memo inside `body` does not invalidate the view.
+  @MainActor final class Memo {
+    private var key: Tuple<AttributedString, InlineStyle, TextEnvironmentValues>?
+    private var output = AttributedString()
+
+    func output(
+      for input: AttributedString,
+      style: InlineStyle,
+      environment: TextEnvironmentValues
+    ) -> AttributedString {
+      let key = Tuple(input, style, environment)
+      if key != self.key {
+        output = WithInlineStyle.resolve(attributedString: input, style: style, in: environment)
+        self.key = key
       }
+      return output
+    }
   }
 
-  private func resolve(
+  static func resolve(
     attributedString: AttributedString,
     style: InlineStyle,
     in environment: TextEnvironmentValues
@@ -52,6 +67,10 @@ struct WithInlineStyle<Content: View>: View {
     var output = attributedString
 
     for run in attributedString.runs {
+      guard run.inlinePresentationIntent != nil || run.link != nil else {
+        continue
+      }
+
       var attributes = AttributeContainer()
 
       if let intent = run.inlinePresentationIntent {

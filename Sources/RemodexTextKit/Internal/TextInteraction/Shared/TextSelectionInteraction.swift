@@ -10,6 +10,11 @@ import SwiftUI
 // (`PlatformTextSelectionInteraction`), which presents the appropriate selection UI for macOS
 // or iOS. This separation keeps model management in shared code while platform interactions
 // remain independent.
+//
+// The fragments publish their layouts to this modifier only while it asks for them
+// (`TextLayoutPublisher`). On iOS that is while the text is touched or selected
+// (`TextSelectionModel.observesLayout`, driven by `UITextInteractionView`), so selectable text
+// costs nothing extra while it scrolls; AppKit keeps them published.
 
 struct TextSelectionInteraction: ViewModifier {
   #if REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION
@@ -23,7 +28,8 @@ struct TextSelectionInteraction: ViewModifier {
     #if REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION
       if textSelection.allowsSelection {
         content
-          .overlayTextLayoutCollection { layoutCollection in
+          .environment(\.publishesTextLayout, publishesTextLayout)
+          .overlayTextLayoutCollection(PublishedTextLayoutKey.self) { layoutCollection in
             // A representable receives preference changes without using task(id:),
             // whose implementation still installs an onChange observer. Its
             // coordinator defers the burst and adopts only the settled collection.
@@ -44,6 +50,16 @@ struct TextSelectionInteraction: ViewModifier {
       content
     #endif
   }
+
+  #if REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION
+    private var publishesTextLayout: Bool {
+      #if canImport(UIKit)
+        model.observesLayout
+      #else
+        true
+      #endif
+    }
+  #endif
 }
 
 #if REMODEX_TEXT_KIT_ENABLE_TEXT_SELECTION

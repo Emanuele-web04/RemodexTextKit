@@ -13,8 +13,15 @@
   // Selection UI is provided by `UITextInteraction` configured for non-editable content.
   // While text is selected, a tap anywhere off the selection clears it, including elsewhere
   // in the same text, which `UITextInteraction` leaves selected for non-editable content.
+  //
+  // The text publishes its layouts to the model only from the moment a touch lands on this view
+  // until a while after the selection is gone (`TextSelectionModel.observesLayout`). A long press
+  // needs them half a second later, by when they have arrived; a link tap waits for them.
 
   final class UITextInteractionView: UIView {
+    // How long layouts stay published after the last touch or selection.
+    private static let layoutObservationGrace: TimeInterval = 1.5
+
     override var canBecomeFirstResponder: Bool {
       true
     }
@@ -29,6 +36,7 @@
 
     private(set) lazy var _tokenizer = UITextInputStringTokenizer(textInput: self)
     private let selectionInteraction: UITextInteraction
+    private var layoutRelease: DispatchWorkItem?
     private lazy var outsideTapGesture: UITapGestureRecognizer = {
       let gesture = UITapGestureRecognizer(target: self, action: #selector(handleOutsideTap(_:)))
       // Observe only: the tapped control or scroll view still gets the touch.
@@ -63,7 +71,39 @@
           return false
         }
       }
-      return super.point(inside: point, with: event)
+      guard super.point(inside: point, with: event) else {
+        return false
+      }
+      // Hit testing runs when a touch lands, before any of its gestures.
+      if event?.type == .touches {
+        observeLayout()
+      }
+      return true
+    }
+
+    private func observeLayout() {
+      model.observesLayout = true
+      scheduleLayoutRelease()
+    }
+
+    private func scheduleLayoutRelease() {
+      layoutRelease?.cancel()
+      let release = DispatchWorkItem { [weak self] in
+        self?.releaseLayoutIfIdle()
+      }
+      layoutRelease = release
+      DispatchQueue.main.asyncAfter(deadline: .now() + Self.layoutObservationGrace, execute: release)
+    }
+
+    private func releaseLayoutIfIdle() {
+      guard model.observesLayout else {
+        return
+      }
+      guard model.selectedRange == nil, !isFirstResponder else {
+        scheduleLayoutRelease()
+        return
+      }
+      model.observesLayout = false
     }
 
     override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
@@ -102,6 +142,9 @@
         guard let self else { return }
         self.inputDelegate?.selectionDidChange(self)
         self.updateOutsideTapGesture()
+        if self.model.selectedRange == nil, self.model.observesLayout {
+          self.scheduleLayoutRelease()
+        }
       }
 
       let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
@@ -151,10 +194,13 @@
 
     @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
       let location = gesture.location(in: self)
-      guard let url = model.url(for: location) else {
-        return
+      // A quick tap can end before the layouts its touch asked for have arrived.
+      model.whenLayoutAvailable { [weak self] in
+        guard let self, let url = self.model.url(for: location) else {
+          return
+        }
+        self.openURL(url)
       }
-      openURL(url)
     }
 
     @objc private func share(_ sender: Any?) {

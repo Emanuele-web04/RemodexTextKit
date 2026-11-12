@@ -69,12 +69,4 @@ extension StructuredText.TableCell {
       self.vertical = vertical
     }
   }
-
-  struct SpacingKey: PreferenceKey {
-    static let defaultValue = Spacing()
-
-    static func reduce(value: inout Spacing, nextValue: () -> Spacing) {
-      value = nextValue()
-    }
-  }
 }

@@ -8,12 +8,28 @@ import Foundation
 @MainActor final class ParsedMarkup {
   private var markup: String?
   private var value = AttributedString()
+  private var referencesAttachments = false
 
-  func attributedString(for markup: String, parser: any MarkupParser) -> AttributedString {
+  /// The parsed markup plus whether it references images or custom emoji, decided once per
+  /// parse so attachment resolution is skipped synchronously for plain documents.
+  func document(for markup: String, parser: any MarkupParser) -> ParsedDocument {
     if markup != self.markup {
       value = (try? parser.attributedString(for: markup)) ?? .init()
+      referencesAttachments = value.referencesAttachments
       self.markup = markup
     }
-    return value
+    return ParsedDocument(value: value, referencesAttachments: referencesAttachments)
+  }
+}
+
+struct ParsedDocument {
+  let value: AttributedString
+  let referencesAttachments: Bool
+}
+
+extension AttributedString {
+  /// Whether any run carries an image or custom emoji URL that `WithAttachments` resolves.
+  var referencesAttachments: Bool {
+    runs.contains { $0.imageURL != nil || $0.remodex.emojiURL != nil }
   }
 }

@@ -2,7 +2,7 @@
   import SwiftUI
   import XCTest
 
-  import RemodexTextKit
+  @testable import RemodexTextKit
 
   // Measures the fixed cost of the text-selection machinery when many structured-text
   // views mount at once, like a chat timeline opening a long thread: per selectable view,
@@ -101,11 +101,14 @@
       let selectable = mountAndSettle(selectable: true)
       XCTAssertEqual(interactionOverlayCount(in: selectable), Self.rowCount)
 
-      // The overlay must also have adopted a non-empty layout collection, proving the
-      // async task(id:) delivery path actually fed the selection model after mount.
-      let overlayTextInput = firstInteractionOverlay(in: selectable) as? (UIView & UITextInput)
-      XCTAssertNotNil(overlayTextInput)
-      XCTAssertTrue(overlayTextInput?.hasText == true)
+      // Idle text publishes no layouts. Once a touch asks for them, the overlay must adopt
+      // a non-empty layout collection, proving the deferred delivery path feeds the model.
+      let overlay = firstInteractionOverlay(in: selectable) as? UITextInteractionView
+      XCTAssertNotNil(overlay)
+      XCTAssertEqual(overlay?.hasText, false)
+      overlay?.model.observesLayout = true
+      RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+      XCTAssertTrue(overlay?.hasText == true)
       tearDown(selectable)
     }
 

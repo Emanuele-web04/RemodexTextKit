@@ -16,6 +16,9 @@ import SwiftUI
 // synchronously the moment a new `AttributedString` arrives, before the async fan-out for any new
 // URLs completes. This prevents already-loaded images/emoji from flashing back to their unresolved
 // placeholders on every content change (e.g. streaming token appends).
+//
+// Documents without image or emoji URLs, decided once per parse, render their content directly:
+// no resolution task runs and a resolution left over from earlier content is never shown.
 
 struct WithAttachments<Content: View>: View {
   @Environment(\.imageAttachmentLoader) private var imageAttachmentLoader
@@ -24,33 +27,48 @@ struct WithAttachments<Content: View>: View {
 
   @State private var model = Model()
 
-  private let attributedString: AttributedString
+  private let document: ParsedDocument
   private let content: (AttributedString) -> Content
 
   init(
-    _ attributedString: AttributedString,
+    _ document: ParsedDocument,
     @ViewBuilder content: @escaping (AttributedString) -> Content
   ) {
-    self.attributedString = attributedString
+    self.document = document
     self.content = content
   }
 
   var body: some View {
-    content(model.resolvedAttributedString ?? attributedString)
-      .task(id: attributedString) {
-        await model.resolveAttachments(
-          in: attributedString,
-          imageAttachmentLoader: imageAttachmentLoader,
-          emojiAttachmentLoader: emojiAttachmentLoader,
-          environment: colorEnvironment
-        )
+    let attributedString = document.value
+
+    content(
+      document.referencesAttachments
+        ? model.resolved(attributedString) : attributedString
+    )
+    // In a background so the content keeps its identity when the document gains or loses
+    // attachment references.
+    .background {
+      if document.referencesAttachments {
+        Color.clear
+          .task(id: attributedString) {
+            await model.resolveAttachments(
+              in: attributedString,
+              imageAttachmentLoader: imageAttachmentLoader,
+              emojiAttachmentLoader: emojiAttachmentLoader,
+              environment: colorEnvironment
+            )
+          }
       }
+    }
   }
 }
 
 extension WithAttachments {
   @MainActor @Observable final class Model {
     var resolvedAttributedString: AttributedString?
+
+    /// The content `resolvedAttributedString` was resolved from.
+    private var resolvedSource: AttributedString?
 
     /// Attachments resolved so far, keyed by the source URL they were resolved from. Used to
     /// carry already-resolved attachments across content changes without waiting on the async
@@ -72,11 +90,13 @@ extension WithAttachments {
 
       guard let partiallyResolved = partiallyResolved(attributedString) else {
         resolvedAttributedString = nil
+        resolvedSource = nil
         attachmentsByURL = [:]
         return
       }
 
       resolvedAttributedString = partiallyResolved
+      resolvedSource = attributedString
 
       var resolvedAttachments: [(Range<AttributedString.Index>, URL, AnyAttachment)] = []
 
@@ -129,6 +149,15 @@ extension WithAttachments {
       }
     }
 
+    /// The best rendering available now for `attributedString`: the resolution made for this
+    /// content, or else the attachments already cached by URL applied synchronously.
+    func resolved(_ attributedString: AttributedString) -> AttributedString {
+      if let resolvedAttributedString, resolvedSource == attributedString {
+        return resolvedAttributedString
+      }
+      return partiallyResolved(attributedString) ?? attributedString
+    }
+
     /// Synchronously applies any already-cached attachments (matched by URL) to `attributedString`,
     /// so previously resolved images/emoji don't flash back to placeholders while the async
     /// fan-out for any new URLs is in flight. Returns `nil` when the string has no image/emoji
@@ -160,12 +189,14 @@ extension WithAttachments {
     ) {
       var attributedString = attributedString
 
+      let source = attributedString
       for (range, url, attachment) in attachments {
         attributedString[range].remodex.attachment = attachment
         attachmentsByURL[url] = attachment
       }
 
       self.resolvedAttributedString = attributedString
+      self.resolvedSource = source
 
       pruneAttachmentsByURL(against: attributedString)
     }
